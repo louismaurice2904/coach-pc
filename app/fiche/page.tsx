@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
+import { useToast } from '../components/Toast'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,8 +10,12 @@ const supabase = createClient(
 )
 
 export default function Fiche() {
+  const { toast } = useToast()
   const [cours, setCours] = useState<any[]>([])
   const [selected, setSelected] = useState<any>(null)
+  const [fiche, setFiche] = useState<string>('')
+  const [loading, setLoading] = useState(false)
+  const [fiches, setFiches] = useState<Record<string, string>>({})
 
   useEffect(() => {
     const fetch = async () => {
@@ -22,92 +27,206 @@ export default function Fiche() {
     fetch()
   }, [])
 
+  const genererFiche = async (c: any) => {
+    if (fiches[c.chapitre]) {
+      setFiche(fiches[c.chapitre])
+      setSelected(c)
+      return
+    }
+    setSelected(c)
+    setFiche('')
+    setLoading(true)
+    try {
+      const res = await fetch('/api/generer-fiche', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chapitre: c.chapitre, contenu: c.contenu })
+      })
+      const data = await res.json()
+      if (data.error) {
+        toast('Erreur lors de la génération', 'error')
+      } else {
+        setFiche(data.fiche)
+        setFiches(prev => ({ ...prev, [c.chapitre]: data.fiche }))
+        toast('Fiche générée avec succès ✅', 'success')
+      }
+    } catch (e) {
+      toast('Erreur de connexion', 'error')
+    }
+    setLoading(false)
+  }
+
+  const formaterFiche = (texte: string) => {
+    return texte.split('\n').map((ligne, i) => {
+      if (ligne.startsWith('##') || ligne.match(/^[1-5]\./)) {
+        return (
+          <div key={i} style={{
+            color: '#a78bfa', fontWeight: 700, fontSize: 14,
+            marginTop: 20, marginBottom: 8, letterSpacing: '0.05em',
+            fontFamily: 'Inter, sans-serif'
+          }}>
+            {ligne.replace(/^#+\s*/, '')}
+          </div>
+        )
+      }
+      if (ligne.startsWith('**') && ligne.endsWith('**')) {
+        return (
+          <div key={i} style={{
+            color: 'white', fontWeight: 700, fontSize: 13,
+            marginTop: 8, fontFamily: 'Inter, sans-serif'
+          }}>
+            {ligne.replace(/\*\*/g, '')}
+          </div>
+        )
+      }
+      if (ligne.startsWith('- ') || ligne.startsWith('• ')) {
+        return (
+          <div key={i} style={{
+            display: 'flex', gap: 8, alignItems: 'flex-start',
+            marginTop: 6, fontFamily: 'Inter, sans-serif'
+          }}>
+            <span style={{ color: '#818cf8', flexShrink: 0, marginTop: 1 }}>▸</span>
+            <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, lineHeight: 1.6 }}>
+              {ligne.replace(/^[-•]\s*/, '').replace(/\*\*(.*?)\*\*/g, '$1')}
+            </span>
+          </div>
+        )
+      }
+      if (ligne.trim() === '') return <div key={i} style={{ height: 6 }} />
+      return (
+        <div key={i} style={{
+          color: 'rgba(255,255,255,0.65)', fontSize: 13,
+          lineHeight: 1.7, marginTop: 4, fontFamily: 'Inter, sans-serif'
+        }}>
+          {ligne.replace(/\*\*(.*?)\*\*/g, '$1')}
+        </div>
+      )
+    })
+  }
+
   return (
-    <div className="min-h-screen relative" style={{
-      background: 'linear-gradient(135deg, #1a237e 0%, #1565c0 50%, #42a5f5 100%)',
-    }}>
+    <div style={{ minHeight: '100vh', background: '#060d2e' }}>
       <style>{`
-        .blob { position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.15; pointer-events: none; }
-        .card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
-        .card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
-        @media print {
-          nav, .no-print { display: none !important; }
-          body { background: white !important; }
-          .blob { display: none !important; }
-          .print-content { color: black !important; }
+        .noise{position:fixed;top:-50%;left:-50%;width:200%;height:200%;opacity:0.03;pointer-events:none;z-index:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")}
+        .glass{background:rgba(255,255,255,0.04);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.08)}
+        .card-hover{transition:all 0.3s ease;cursor:pointer}
+        .card-hover:hover{background:rgba(255,255,255,0.07)!important;border-color:rgba(99,102,241,0.4)!important}
+        .glow-btn{background:linear-gradient(135deg,#3b82f6,#8b5cf6);box-shadow:0 0 30px rgba(99,102,241,0.4);transition:all 0.3s;border:none;cursor:pointer}
+        .glow-btn:hover{box-shadow:0 0 50px rgba(99,102,241,0.7);transform:scale(1.05)}
+        @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+        @media print{
+          nav,.no-print{display:none!important}
+          body{background:white!important;color:black!important}
+          .print-content{color:black!important}
         }
       `}</style>
 
-      <div className="blob" style={{ width: 400, height: 400, background: '#42a5f5', top: -100, right: -100 }} />
-      <div className="blob" style={{ width: 300, height: 300, background: '#7c4dff', bottom: 100, left: -50 }} />
+      <div className="noise" />
+      <div style={{ position: 'fixed', top: -200, right: -200, width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.2), transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
 
-      <div className="max-w-2xl mx-auto py-10 px-4 relative">
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '40px 24px', position: 'relative', zIndex: 1 }}>
 
         {/* Header */}
-        <div className="flex justify-between items-center mb-8 no-print">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 32 }} className="no-print">
           <div>
-            <h1 className="text-2xl font-bold text-white">📋 Mes fiches de révision</h1>
-            <p className="text-blue-200 text-sm mt-1">Clique sur un chapitre pour voir son contenu.</p>
+            <h1 style={{ fontSize: 28, fontWeight: 900, color: 'white', letterSpacing: '-0.5px', marginBottom: 6, fontFamily: 'Inter, sans-serif' }}>📋 Mes fiches</h1>
+            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, fontFamily: 'Inter, sans-serif' }}>
+              Sélectionne un chapitre pour générer sa fiche par IA.
+            </p>
           </div>
-          <button
-            onClick={() => window.print()}
-            className="text-white text-sm font-bold px-4 py-2 rounded-xl transition hover:scale-105"
-            style={{
-              background: 'linear-gradient(135deg, #42a5f5, #1565c0)',
-              boxShadow: '0 4px 15px rgba(66,165,245,0.4)'
-            }}
-          >
-            🖨️ Imprimer
-          </button>
+          {selected && fiche && (
+            <button onClick={() => window.print()} className="glow-btn no-print" style={{
+              color: 'white', fontWeight: 700, fontSize: 13,
+              padding: '12px 20px', borderRadius: 12, fontFamily: 'Inter, sans-serif'
+            }}>
+              🖨️ Imprimer
+            </button>
+          )}
         </div>
 
-        {/* Contenu */}
-        {cours.length === 0 ? (
-          <div className="card rounded-2xl p-12 text-center" style={{
-            background: 'rgba(255,255,255,0.08)',
-            backdropFilter: 'blur(12px)',
-            border: '1px solid rgba(255,255,255,0.15)'
-          }}>
-            <p className="text-5xl mb-4">📭</p>
-            <p className="text-blue-200">Aucun cours importé pour l'instant.</p>
-          </div>
-        ) : (
-          <div className="space-y-4 print-content">
-            {cours.map((c) => (
-              <div
-                key={c.user_id + c.chapitre}
-                className="card rounded-2xl overflow-hidden cursor-pointer"
-                style={{
-                  background: 'rgba(255,255,255,0.08)',
-                  backdropFilter: 'blur(12px)',
-                  border: `1px solid ${selected?.chapitre === c.chapitre ? 'rgba(66,165,245,0.6)' : 'rgba(255,255,255,0.15)'}`,
-                }}
-                onClick={() => setSelected(selected?.chapitre === c.chapitre ? null : c)}
-              >
-                <div className="px-6 py-4 flex justify-between items-center no-print">
-                  <h2 className="font-semibold text-white">{c.chapitre}</h2>
-                  <span className="text-blue-300 text-lg">{selected?.chapitre === c.chapitre ? '▲' : '▼'}</span>
-                </div>
+        <div style={{ display: 'grid', gridTemplateColumns: selected ? '280px 1fr' : '1fr', gap: 20 }}>
 
-                {selected?.chapitre === c.chapitre && (
-                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                    <div className="px-6 py-4 mx-4 my-4 rounded-xl no-print" style={{
-                      background: 'rgba(255,193,7,0.1)',
-                      border: '1px solid rgba(255,193,7,0.25)'
-                    }}>
-                      <p className="text-xs font-bold text-yellow-300 mb-2">🤖 Fiche IA</p>
-                      <p className="text-xs text-yellow-100">La génération automatique sera disponible prochainement.</p>
-                    </div>
-                    <div className="px-6 pb-6">
-                      <p className="text-xs font-semibold text-blue-300 mb-3 uppercase tracking-wide no-print">Contenu du cours</p>
-                      <p className="text-sm text-blue-100 whitespace-pre-wrap leading-relaxed">{c.contenu}</p>
-                    </div>
-                  </div>
-                )}
+          {/* Liste des cours */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {cours.length === 0 ? (
+              <div className="glass" style={{ borderRadius: 20, padding: 40, textAlign: 'center' }}>
+                <p style={{ fontSize: 40, marginBottom: 12 }}>📭</p>
+                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, fontFamily: 'Inter, sans-serif' }}>
+                  Aucun cours importé.
+                </p>
+              </div>
+            ) : cours.map(c => (
+              <div
+                key={c.id}
+                className="glass card-hover"
+                onClick={() => genererFiche(c)}
+                style={{
+                  borderRadius: 16, padding: '14px 18px',
+                  border: selected?.id === c.id
+                    ? '1px solid rgba(99,102,241,0.6)'
+                    : '1px solid rgba(255,255,255,0.08)',
+                  background: selected?.id === c.id
+                    ? 'rgba(99,102,241,0.15)'
+                    : 'rgba(255,255,255,0.04)',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <p style={{
+                    color: selected?.id === c.id ? 'white' : 'rgba(255,255,255,0.7)',
+                    fontWeight: selected?.id === c.id ? 700 : 400,
+                    fontSize: 14, fontFamily: 'Inter, sans-serif'
+                  }}>
+                    {c.chapitre}
+                  </p>
+                  {fiches[c.chapitre] && (
+                    <span style={{ fontSize: 10, color: '#22c55e', fontWeight: 700, fontFamily: 'Inter, sans-serif' }}>✓ GÉNÉRÉE</span>
+                  )}
+                </div>
               </div>
             ))}
           </div>
-        )}
+
+          {/* Fiche générée */}
+          {selected && (
+            <div className="glass" style={{ borderRadius: 20, padding: 28, minHeight: 400 }}>
+              {loading ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 300, gap: 20 }}>
+                  <div style={{
+                    width: 48, height: 48, borderRadius: '50%',
+                    border: '3px solid rgba(99,102,241,0.2)',
+                    borderTop: '3px solid #818cf8',
+                    animation: 'spin 1s linear infinite'
+                  }} />
+                  <div style={{ textAlign: 'center' }}>
+                    <p style={{ color: 'white', fontWeight: 700, fontSize: 15, fontFamily: 'Inter, sans-serif', marginBottom: 6 }}>
+                      🤖 Claude génère ta fiche...
+                    </p>
+                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, fontFamily: 'Inter, sans-serif', animation: 'pulse 2s ease-in-out infinite' }}>
+                      Analyse du cours en cours, ça prend 10-15 secondes
+                    </p>
+                  </div>
+                </div>
+              ) : fiche ? (
+                <div className="print-content">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                    <div>
+                      <p style={{ color: '#a78bfa', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', marginBottom: 4, fontFamily: 'Inter, sans-serif' }}>FICHE DE RÉVISION • GÉNÉRÉE PAR IA</p>
+                      <h2 style={{ color: 'white', fontWeight: 900, fontSize: 20, fontFamily: 'Inter, sans-serif' }}>{selected.chapitre}</h2>
+                    </div>
+                    <div style={{
+                      background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.3)',
+                      borderRadius: 100, padding: '4px 12px'
+                    }}>
+                      <span style={{ color: '#86efac', fontSize: 11, fontWeight: 700, fontFamily: 'Inter, sans-serif' }}>✓ Prête</span>
+                    </div>
+                  </div>
+                  <div>{formaterFiche(fiche)}</div>
+                </div>
+              ) : null}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

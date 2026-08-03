@@ -19,18 +19,17 @@ const chapitres = [
 
 function genererPlanning(tempsSemaine: number, cours: any[]) {
   const heuresParJour = Math.round((tempsSemaine / 5) * 10) / 10
-  const chapitresARevoir = cours.length > 0
-    ? cours.map(c => c.chapitre)
-    : chapitres.slice(0, 3)
-
+  const chapitresARevoir = cours.length > 0 ? cours.map(c => c.chapitre) : chapitres.slice(0, 3)
   return jours.map((jour, i) => {
     if (i >= 5) return { jour, repos: true, seances: [] }
     const chapitre = chapitresARevoir[i % chapitresARevoir.length]
-    const seances = [
-      { type: 'Révision cours', duree: Math.round(heuresParJour * 0.4 * 60), chapitre },
-      { type: 'Exercices', duree: Math.round(heuresParJour * 0.6 * 60), chapitre },
-    ]
-    return { jour, repos: false, seances }
+    return {
+      jour, repos: false,
+      seances: [
+        { type: 'Révision cours', duree: Math.round(heuresParJour * 0.4 * 60), chapitre },
+        { type: 'Exercices', duree: Math.round(heuresParJour * 0.6 * 60), chapitre },
+      ]
+    }
   })
 }
 
@@ -47,91 +46,78 @@ export default function Planning() {
       const { data: c } = await supabase.from('cours').select('*').eq('user_id', user.id)
       if (p) setProfil(p)
       if (c) setCours(c)
-      const temps = p?.temps_semaine || 5
-      setPlanning(genererPlanning(temps, c || []))
+      setPlanning(genererPlanning(p?.temps_semaine || 5, c || []))
     }
     fetch()
   }, [])
 
   return (
-    <div className="min-h-screen relative" style={{
-      background: 'linear-gradient(135deg, #1a237e 0%, #1565c0 50%, #42a5f5 100%)',
-    }}>
+    <div style={{ minHeight: '100vh', background: '#060d2e' }}>
       <style>{`
-        .blob { position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.15; pointer-events: none; }
-        .card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
-        .card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+        .noise { position: fixed; top:-50%; left:-50%; width:200%; height:200%; opacity:0.03; pointer-events:none; z-index:0;
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E"); }
+        .glass { background: rgba(255,255,255,0.04); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-2px); }
+        .glow-btn { background: linear-gradient(135deg, #3b82f6, #8b5cf6); box-shadow: 0 0 30px rgba(99,102,241,0.4); transition: all 0.3s; border: none; cursor: pointer; }
+        .glow-btn:hover { box-shadow: 0 0 50px rgba(99,102,241,0.7); transform: scale(1.05); }
         @media print {
           nav, .no-print { display: none !important; }
-          body { background: white !important; }
-          * { color: black !important; }
+          body { background: white !important; color: black !important; }
         }
       `}</style>
 
-      <div className="blob" style={{ width: 400, height: 400, background: '#42a5f5', top: -100, right: -100 }} />
-      <div className="blob" style={{ width: 300, height: 300, background: '#7c4dff', bottom: 100, left: -50 }} />
+      <div className="noise" />
+      <div style={{ position: 'fixed', top: -200, right: -200, width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.2), transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
 
-      <div className="max-w-3xl mx-auto py-10 px-4 relative">
-        <div className="flex justify-between items-start mb-8">
+      <div style={{ maxWidth: 800, margin: '0 auto', padding: '40px 24px', position: 'relative', zIndex: 1 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 32 }} className="no-print">
           <div>
-            <h1 className="text-2xl font-bold text-white">📅 Mon planning</h1>
-            <p className="text-blue-200 text-sm mt-1">
+            <h1 style={{ fontSize: 28, fontWeight: 900, color: 'white', letterSpacing: '-0.5px', marginBottom: 6 }}>📅 Mon planning</h1>
+            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>
               {profil ? `Basé sur ${profil.temps_semaine}h de travail par semaine` : 'Chargement...'}
             </p>
           </div>
-          <button
-            onClick={() => window.print()}
-            className="no-print text-white text-sm font-bold px-4 py-2 rounded-xl transition hover:scale-105"
-            style={{
-              background: 'linear-gradient(135deg, #42a5f5, #1565c0)',
-              boxShadow: '0 4px 15px rgba(66,165,245,0.4)'
-            }}
-          >
+          <button onClick={() => window.print()} className="glow-btn no-print" style={{
+            color: 'white', fontWeight: 700, fontSize: 13, padding: '12px 20px', borderRadius: 12
+          }}>
             🖨️ Imprimer
           </button>
         </div>
 
-        <div className="space-y-4">
-          {planning.map((jour) => (
-            <div key={jour.jour} className="card rounded-2xl overflow-hidden" style={{
-              background: jour.repos ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.08)',
-              backdropFilter: 'blur(12px)',
-              border: `1px solid ${jour.repos ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.15)'}`,
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {planning.map(jour => (
+            <div key={jour.jour} className="glass card-hover" style={{
+              borderRadius: 20, overflow: 'hidden',
+              opacity: jour.repos ? 0.5 : 1
             }}>
-              <div className="px-6 py-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div style={{
-                    width: 36, height: 36, borderRadius: 10,
-                    background: jour.repos ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 16
-                  }}>
-                    {jour.repos ? '😴' : '📖'}
-                  </div>
-                  <div>
-                    <p className="font-bold text-white">{jour.jour}</p>
-                    {jour.repos ? (
-                      <p className="text-xs text-blue-300">Repos mérité</p>
-                    ) : (
-                      <p className="text-xs text-blue-300">{jour.seances.reduce((a: number, s: any) => a + s.duree, 0)} min de travail</p>
-                    )}
-                  </div>
+              <div style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 14 }}>
+                <div style={{
+                  width: 40, height: 40, borderRadius: 12, flexShrink: 0,
+                  background: jour.repos ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18
+                }}>
+                  {jour.repos ? '😴' : '📖'}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ color: 'white', fontWeight: 700, fontSize: 15 }}>{jour.jour}</p>
+                  <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>
+                    {jour.repos ? 'Repos mérité' : `${jour.seances.reduce((a: number, s: any) => a + s.duree, 0)} min de travail`}
+                  </p>
                 </div>
               </div>
 
               {!jour.repos && (
-                <div className="px-6 pb-5 grid grid-cols-2 gap-3">
+                <div style={{ padding: '0 16px 16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                   {jour.seances.map((seance: any, i: number) => (
                     <div key={i} style={{
-                      background: i === 0 ? 'rgba(59,130,246,0.15)' : 'rgba(139,92,246,0.15)',
-                      border: `1px solid ${i === 0 ? 'rgba(59,130,246,0.3)' : 'rgba(139,92,246,0.3)'}`,
-                      borderRadius: 12, padding: '12px 14px'
+                      borderRadius: 12, padding: '12px 16px',
+                      background: i === 0 ? 'rgba(59,130,246,0.1)' : 'rgba(139,92,246,0.1)',
+                      border: `1px solid ${i === 0 ? 'rgba(59,130,246,0.25)' : 'rgba(139,92,246,0.25)'}`
                     }}>
-                      <p className="text-xs font-bold mb-1" style={{ color: i === 0 ? '#60a5fa' : '#a78bfa' }}>
-                        {seance.type}
-                      </p>
-                      <p className="text-sm text-white font-medium">{seance.chapitre}</p>
-                      <p className="text-xs text-blue-300 mt-1">⏱ {seance.duree} min</p>
+                      <p style={{ color: i === 0 ? '#60a5fa' : '#a78bfa', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>{seance.type.toUpperCase()}</p>
+                      <p style={{ color: 'white', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>{seance.chapitre}</p>
+                      <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11 }}>⏱ {seance.duree} min</p>
                     </div>
                   ))}
                 </div>
@@ -140,14 +126,13 @@ export default function Planning() {
           ))}
         </div>
 
-        <div className="mt-6 rounded-2xl p-5" style={{
-          background: 'rgba(255,193,7,0.1)',
-          border: '1px solid rgba(255,193,7,0.25)'
+        <div style={{
+          marginTop: 20, borderRadius: 16, padding: '16px 20px',
+          background: 'rgba(250,204,21,0.06)', border: '1px solid rgba(250,204,21,0.2)'
         }}>
-          <p className="text-xs font-bold text-yellow-300 mb-2">💡 Comment est calculé ton planning ?</p>
-          <p className="text-xs text-yellow-100 leading-relaxed">
-            Ton planning est généré automatiquement selon ton temps de travail hebdomadaire et les chapitres que tu as importés.
-            Il s'adaptera automatiquement à mesure que tu progresseras et que tu ajouteras des cours.
+          <p style={{ color: '#fcd34d', fontSize: 11, fontWeight: 700, marginBottom: 6 }}>💡 COMMENT EST CALCULÉ TON PLANNING ?</p>
+          <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13, lineHeight: 1.7 }}>
+            Ton planning est généré selon ton temps de travail hebdomadaire et les chapitres importés. Il s'adapte automatiquement à ta progression.
           </p>
         </div>
       </div>

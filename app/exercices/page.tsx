@@ -25,15 +25,19 @@ export default function Exercices() {
   const [corrigeant, setCorrigeant] = useState<number | null>(null)
   const [isPremium, setIsPremium] = useState(false)
   const { checkAccess, PremiumModal } = usePremiumCheck(isPremium)
+  const [niveauScolaire, setNiveauScolaire] = useState('Terminale')
+  const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/connexion'; return }
+      setUserId(user.id)
       const { data } = await supabase.from('cours').select('*').eq('user_id', user.id)
       if (data) setCours(data)
-      const { data: profil } = await supabase.from('profils').select('premium').eq('user_id', user.id).single()
+      const { data: profil } = await supabase.from('profils').select('premium, niveau_scolaire').eq('user_id', user.id).single()
       setIsPremium(profil?.premium || false)
+      if (profil?.niveau_scolaire) setNiveauScolaire(profil.niveau_scolaire)
     }
     init()
   }, [])
@@ -52,11 +56,11 @@ export default function Exercices() {
       const res = await fetch('/api/generer-exercices', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chapitre: selected.chapitre, contenu: selected.contenu, niveau })
+        body: JSON.stringify({ chapitre: selected.chapitre, contenu: selected.contenu, niveau, niveauScolaire, userId })
       })
       const data = await res.json()
       if (data.error) {
-        toast('Erreur lors de la génération', 'error')
+        toast(data.error, 'error')
       } else {
         setExercices(data.exercices || [])
         toast('5 exercices générés ✅', 'success')
@@ -171,26 +175,26 @@ export default function Exercices() {
       <PremiumModal />
       <style>{`
         .noise{position:fixed;top:-50%;left:-50%;width:200%;height:200%;opacity:0.03;pointer-events:none;z-index:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")}
-        .glass{background:rgba(255,255,255,0.04);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.08)}
-        .glow-btn{background:linear-gradient(135deg,#3b82f6,#8b5cf6);box-shadow:0 0 30px rgba(99,102,241,0.4);transition:all 0.3s;border:none;cursor:pointer}
-        .glow-btn:hover{box-shadow:0 0 50px rgba(99,102,241,0.7);transform:scale(1.05)}
+        .glass{background:rgba(255,255,255,0.025);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.08)}
+        .btn-primary{background:#fff;color:#070b18;transition:opacity 0.2s ease;border:none;cursor:pointer}
+        .btn-primary:hover{opacity:0.85}
         textarea{background:rgba(255,255,255,0.05)!important;border:1px solid rgba(255,255,255,0.1)!important;color:white!important;border-radius:12px;padding:12px 14px;width:100%;outline:none;font-size:13px;font-family:Inter,sans-serif;resize:vertical}
         textarea::placeholder{color:rgba(255,255,255,0.25)}
-        textarea:focus{border-color:rgba(99,102,241,0.6)!important}
+        textarea:focus{border-color:rgba(56,189,248,0.6)!important}
         @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
         @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
       `}</style>
 
       <div className="noise" />
-      <div style={{ position: 'fixed', top: -200, right: -200, width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.2), transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
+      <div style={{ position: 'fixed', top: -200, right: -200, width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(56,189,248,0.08), transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
 
       <div style={{ maxWidth: 800, margin: '0 auto', padding: '40px 24px', position: 'relative', zIndex: 1 }}>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
           <h1 style={{ fontSize: 28, fontWeight: 900, color: 'white', letterSpacing: '-0.5px', fontFamily: 'Inter, sans-serif' }}>✏️ Exercices</h1>
           {!isPremium && (
-            <span style={{ background: 'rgba(167,139,250,0.15)', outline: '1px solid rgba(167,139,250,0.4)', color: '#c4b5fd', fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 100, fontFamily: 'Inter, sans-serif' }}>
+            <span style={{ background: 'rgba(56,189,248,0.12)', outline: '1px solid rgba(56,189,248,0.4)', color: '#7dd3fc', fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 100, fontFamily: 'Inter, sans-serif' }}>
               👑 PREMIUM
             </span>
           )}
@@ -210,9 +214,9 @@ export default function Exercices() {
               <button key={c.id} onClick={() => { setSelected(c); setExercices([]); setValide(false); setReponses({}); setCorrections({}) }} style={{
                 padding: '12px 16px', borderRadius: 12, border: 'none', cursor: 'pointer',
                 textAlign: 'left', fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 500, transition: 'all 0.2s',
-                background: selected?.id === c.id ? 'linear-gradient(135deg, rgba(99,102,241,0.3), rgba(139,92,246,0.2))' : 'rgba(255,255,255,0.04)',
+                background: selected?.id === c.id ? 'rgba(56,189,248,0.12)' : 'rgba(255,255,255,0.04)',
                 color: selected?.id === c.id ? 'white' : 'rgba(255,255,255,0.6)',
-                outline: selected?.id === c.id ? '1px solid rgba(99,102,241,0.5)' : '1px solid rgba(255,255,255,0.06)',
+                outline: selected?.id === c.id ? '1px solid rgba(56,189,248,0.5)' : '1px solid rgba(255,255,255,0.06)',
               }}>
                 {selected?.id === c.id ? '▸ ' : ''}{c.chapitre}
               </button>
@@ -225,16 +229,16 @@ export default function Exercices() {
               <button key={n} onClick={() => setNiveau(n)} style={{
                 flex: 1, padding: '10px', borderRadius: 10, border: 'none', cursor: 'pointer',
                 fontWeight: 700, fontSize: 13, fontFamily: 'Inter, sans-serif', transition: 'all 0.2s',
-                background: niveau === n ? (n === 'facile' ? 'linear-gradient(135deg,#22c55e,#16a34a)' : n === 'intermédiaire' ? 'linear-gradient(135deg,#3b82f6,#8b5cf6)' : 'linear-gradient(135deg,#ef4444,#dc2626)') : 'rgba(255,255,255,0.04)',
-                color: niveau === n ? 'white' : 'rgba(255,255,255,0.4)',
+                background: niveau === n ? 'white' : 'rgba(255,255,255,0.04)',
+                color: niveau === n ? '#070b18' : 'rgba(255,255,255,0.4)',
               }}>
                 {n === 'facile' ? '🟢 Facile' : n === 'intermédiaire' ? '🔵 Intermédiaire' : '🔴 Difficile'}
               </button>
             ))}
           </div>
 
-          <button onClick={() => checkAccess(genererExercices)} disabled={loading || !selected} className="glow-btn" style={{
-            width: '100%', color: 'white', fontWeight: 700, fontSize: 15,
+          <button onClick={() => checkAccess(genererExercices)} disabled={loading || !selected} className="btn-primary" style={{
+            width: '100%', fontWeight: 700, fontSize: 15,
             padding: '14px', borderRadius: 14, fontFamily: 'Inter, sans-serif',
             opacity: loading || !selected ? 0.5 : 1
           }}>
@@ -243,7 +247,7 @@ export default function Exercices() {
 
           {loading && (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginTop: 16 }}>
-              <div style={{ width: 20, height: 20, borderRadius: '50%', border: '2px solid rgba(99,102,241,0.2)', borderTop: '2px solid #38bdf8', animation: 'spin 1s linear infinite' }} />
+              <div style={{ width: 20, height: 20, borderRadius: '50%', border: '2px solid rgba(56,189,248,0.2)', borderTop: '2px solid #38bdf8', animation: 'spin 1s linear infinite' }} />
               <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, fontFamily: 'Inter, sans-serif', animation: 'pulse 2s ease-in-out infinite' }}>
                 Claude génère des exercices adaptés à ton cours...
               </p>
@@ -270,9 +274,9 @@ export default function Exercices() {
               <div key={ex.id} className="glass" style={{ borderRadius: 20, padding: 24, animation: `fadeIn 0.4s ease ${idx * 0.1}s both` }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
                   <span style={{
-                    background: ex.type === 'qcm' ? 'rgba(59,130,246,0.2)' : ex.type === 'calcul' ? 'rgba(245,158,11,0.2)' : 'rgba(139,92,246,0.2)',
-                    outline: `1px solid ${ex.type === 'qcm' ? 'rgba(59,130,246,0.4)' : ex.type === 'calcul' ? 'rgba(245,158,11,0.4)' : 'rgba(139,92,246,0.4)'}`,
-                    color: ex.type === 'qcm' ? '#60a5fa' : ex.type === 'calcul' ? '#fcd34d' : '#7dd3fc',
+                    background: ex.type === 'qcm' ? 'rgba(56,189,248,0.15)' : ex.type === 'calcul' ? 'rgba(245,158,11,0.15)' : 'rgba(167,139,250,0.15)',
+                    outline: `1px solid ${ex.type === 'qcm' ? 'rgba(56,189,248,0.4)' : ex.type === 'calcul' ? 'rgba(245,158,11,0.4)' : 'rgba(167,139,250,0.4)'}`,
+                    color: ex.type === 'qcm' ? '#7dd3fc' : ex.type === 'calcul' ? '#fcd34d' : '#c4b5fd',
                     fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 100, fontFamily: 'Inter, sans-serif'
                   }}>
                     {ex.type === 'qcm' ? 'QCM' : ex.type === 'calcul' ? 'CALCUL' : 'QUESTION OUVERTE'}
@@ -290,7 +294,7 @@ export default function Exercices() {
                       let bg = 'rgba(255,255,255,0.04)'
                       let color = 'rgba(255,255,255,0.7)'
                       let outlineColor = 'rgba(255,255,255,0.08)'
-                      if (!valide && choisi) { bg = 'rgba(99,102,241,0.2)'; color = 'white'; outlineColor = 'rgba(99,102,241,0.6)' }
+                      if (!valide && choisi) { bg = 'rgba(56,189,248,0.15)'; color = 'white'; outlineColor = 'rgba(56,189,248,0.6)' }
                       if (valide && correct) { bg = 'rgba(34,197,94,0.15)'; color = '#86efac'; outlineColor = 'rgba(34,197,94,0.5)' }
                       if (valide && choisi && !correct) { bg = 'rgba(239,68,68,0.15)'; color = '#fca5a5'; outlineColor = 'rgba(239,68,68,0.5)' }
                       return (
@@ -332,7 +336,7 @@ export default function Exercices() {
                         {reponsesOuvertes[ex.id] && !corrections[ex.id] && (
                           <button onClick={() => checkAccess(() => corrigerReponse(ex))} disabled={corrigeant === ex.id} style={{
                             padding: '10px 18px', borderRadius: 10, border: 'none', cursor: 'pointer',
-                            background: 'linear-gradient(135deg,#3b82f6,#8b5cf6)', color: 'white',
+                            background: 'white', color: '#070b18',
                             fontWeight: 700, fontSize: 13, fontFamily: 'Inter, sans-serif',
                             opacity: corrigeant === ex.id ? 0.6 : 1, marginBottom: 12
                           }}>
@@ -371,8 +375,8 @@ export default function Exercices() {
             ))}
 
             {!valide && (
-              <button onClick={handleValider} disabled={Object.keys(reponses).length < qcmCount} className="glow-btn" style={{
-                width: '100%', color: 'white', fontWeight: 700, fontSize: 15,
+              <button onClick={handleValider} disabled={Object.keys(reponses).length < qcmCount} className="btn-primary" style={{
+                width: '100%', fontWeight: 700, fontSize: 15,
                 padding: '16px', borderRadius: 16, fontFamily: 'Inter, sans-serif',
                 opacity: Object.keys(reponses).length < qcmCount ? 0.5 : 1
               }}>
@@ -391,8 +395,8 @@ export default function Exercices() {
                 <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, fontFamily: 'Inter, sans-serif', marginBottom: 20 }}>
                   {score === qcmCount ? 'Parfait ! Tu maîtrises ce chapitre.' : score >= 2 ? 'Bon travail ! Continue à réviser.' : 'Continue à réviser ce chapitre.'}
                 </p>
-                <button onClick={() => checkAccess(genererExercices)} className="glow-btn" style={{
-                  color: 'white', fontWeight: 700, fontSize: 14, padding: '12px 28px', borderRadius: 12,
+                <button onClick={() => checkAccess(genererExercices)} className="btn-primary" style={{
+                  fontWeight: 700, fontSize: 14, padding: '12px 28px', borderRadius: 12,
                   fontFamily: 'Inter, sans-serif'
                 }}>
                   🔄 Nouveaux exercices

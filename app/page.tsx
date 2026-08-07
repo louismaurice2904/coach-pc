@@ -876,6 +876,7 @@ export default function Home() {
         <div style={{ display: 'flex', gap: 24 }}>
           <Link href="/contact" style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, textDecoration: 'none' }}>Contact</Link>
           <Link href="/mentions-legales" style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, textDecoration: 'none' }}>Mentions légales</Link>
+          <Link href="/cgv" style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, textDecoration: 'none' }}>CGV</Link>
           <Link href="/inscription" style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, textDecoration: 'none' }}>S'inscrire</Link>
         </div>
       </div>

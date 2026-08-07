@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { useToast } from '../components/Toast'
+import { usePremiumCheck } from '../components/PremiumGate'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -16,31 +17,49 @@ export default function Fiche() {
   const [fiche, setFiche] = useState<string>('')
   const [loading, setLoading] = useState(false)
   const [fiches, setFiches] = useState<Record<string, string>>({})
+  const [niveauScolaire, setNiveauScolaire] = useState('Terminale')
+  const [explicationAlternative, setExplicationAlternative] = useState('')
+  const [loadingExplication, setLoadingExplication] = useState(false)
+  const [isPremium, setIsPremium] = useState(false)
+  const { checkAccess, PremiumModal } = usePremiumCheck(isPremium)
 
   useEffect(() => {
-    const fetch = async () => {
+    const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/connexion'; return }
       const { data } = await supabase.from('cours').select('*').eq('user_id', user.id)
       if (data) setCours(data)
+
+      const { data: profil } = await supabase.from('profils').select('niveau_scolaire, premium').eq('user_id', user.id).single()
+      if (profil?.niveau_scolaire) setNiveauScolaire(profil.niveau_scolaire)
+      setIsPremium(profil?.premium || false)
+
+      const { data: fichesData } = await supabase.from('fiches_generees').select('*').eq('user_id', user.id)
+      if (fichesData) {
+        const map: Record<string, string> = {}
+        fichesData.forEach((f: any) => { map[f.chapitre] = f.contenu_fiche })
+        setFiches(map)
+      }
     }
-    fetch()
+    init()
   }, [])
 
   const genererFiche = async (c: any) => {
+    setSelected(c)
+    setExplicationAlternative('')
+
     if (fiches[c.chapitre]) {
       setFiche(fiches[c.chapitre])
-      setSelected(c)
       return
     }
-    setSelected(c)
+
     setFiche('')
     setLoading(true)
     try {
       const res = await fetch('/api/generer-fiche', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chapitre: c.chapitre, contenu: c.contenu })
+        body: JSON.stringify({ chapitre: c.chapitre, contenu: c.contenu, niveauScolaire })
       })
       const data = await res.json()
       if (data.error) {
@@ -48,7 +67,17 @@ export default function Fiche() {
       } else {
         setFiche(data.fiche)
         setFiches(prev => ({ ...prev, [c.chapitre]: data.fiche }))
-        toast('Fiche générée avec succès ✅', 'success')
+
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          await supabase.from('fiches_generees').insert({
+            user_id: user.id,
+            chapitre: c.chapitre,
+            contenu_fiche: data.fiche
+          })
+        }
+
+        toast('Fiche générée et sauvegardée ✅', 'success')
       }
     } catch (e) {
       toast('Erreur de connexion', 'error')
@@ -56,56 +85,100 @@ export default function Fiche() {
     setLoading(false)
   }
 
+  const regenererFiche = async (c: any) => {
+    setFiche('')
+    setExplicationAlternative('')
+    setLoading(true)
+    try {
+      const res = await fetch('/api/generer-fiche', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chapitre: c.chapitre, contenu: c.contenu, niveauScolaire })
+      })
+      const data = await res.json()
+      if (data.error) {
+        toast('Erreur lors de la génération', 'error')
+      } else {
+        setFiche(data.fiche)
+        setFiches(prev => ({ ...prev, [c.chapitre]: data.fiche }))
+
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          await supabase.from('fiches_generees').delete().eq('user_id', user.id).eq('chapitre', c.chapitre)
+          await supabase.from('fiches_generees').insert({
+            user_id: user.id,
+            chapitre: c.chapitre,
+            contenu_fiche: data.fiche
+          })
+        }
+        toast('Fiche régénérée ✅', 'success')
+      }
+    } catch (e) {
+      toast('Erreur de connexion', 'error')
+    }
+    setLoading(false)
+  }
+
+  const expliquerAutrement = async () => {
+    if (!selected || !fiche) return
+    setLoadingExplication(true)
+    try {
+      const res = await fetch('/api/expliquer-autrement', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notion: selected.chapitre, explicationPrecedente: fiche.slice(0, 500), niveauScolaire })
+      })
+      const data = await res.json()
+      if (data.error) {
+        toast('Erreur', 'error')
+      } else {
+        setExplicationAlternative(data.explication)
+      }
+    } catch {
+      toast('Erreur de connexion', 'error')
+    }
+    setLoadingExplication(false)
+  }
+
   const formaterFiche = (texte: string) => {
     return texte.split('\n').map((ligne, i) => {
+      const cleanLigne = ligne.replace(/^#+\s*/, '').replace(/\*\*/g, '')
       if (ligne.startsWith('##') || ligne.match(/^[1-5]\./)) {
         return (
-          <div key={i} style={{
-            color: '#a78bfa', fontWeight: 700, fontSize: 14,
-            marginTop: 20, marginBottom: 8, letterSpacing: '0.05em',
-            fontFamily: 'Inter, sans-serif'
-          }}>
-            {ligne.replace(/^#+\s*/, '')}
+          <div key={i} className="fiche-titre" style={{ color: '#7dd3fc', fontWeight: 700, fontSize: 14, marginTop: 20, marginBottom: 8, letterSpacing: '0.05em', fontFamily: 'Inter, sans-serif' }}>
+            {cleanLigne}
           </div>
         )
       }
       if (ligne.startsWith('**') && ligne.endsWith('**')) {
         return (
-          <div key={i} style={{
-            color: 'white', fontWeight: 700, fontSize: 13,
-            marginTop: 8, fontFamily: 'Inter, sans-serif'
-          }}>
-            {ligne.replace(/\*\*/g, '')}
+          <div key={i} className="fiche-soustitre" style={{ color: 'white', fontWeight: 700, fontSize: 13, marginTop: 8, fontFamily: 'Inter, sans-serif' }}>
+            {cleanLigne}
           </div>
         )
       }
       if (ligne.startsWith('- ') || ligne.startsWith('• ')) {
         return (
-          <div key={i} style={{
-            display: 'flex', gap: 8, alignItems: 'flex-start',
-            marginTop: 6, fontFamily: 'Inter, sans-serif'
-          }}>
-            <span style={{ color: '#818cf8', flexShrink: 0, marginTop: 1 }}>▸</span>
+          <div key={i} className="fiche-puce" style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginTop: 6, fontFamily: 'Inter, sans-serif' }}>
+            <span style={{ color: '#38bdf8', flexShrink: 0, marginTop: 1 }}>▸</span>
             <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, lineHeight: 1.6 }}>
-              {ligne.replace(/^[-•]\s*/, '').replace(/\*\*(.*?)\*\*/g, '$1')}
+              {cleanLigne.replace(/^[-•]\s*/, '')}
             </span>
           </div>
         )
       }
       if (ligne.trim() === '') return <div key={i} style={{ height: 6 }} />
       return (
-        <div key={i} style={{
-          color: 'rgba(255,255,255,0.65)', fontSize: 13,
-          lineHeight: 1.7, marginTop: 4, fontFamily: 'Inter, sans-serif'
-        }}>
-          {ligne.replace(/\*\*(.*?)\*\*/g, '$1')}
+        <div key={i} className="fiche-texte" style={{ color: 'rgba(255,255,255,0.65)', fontSize: 13, lineHeight: 1.7, marginTop: 4, fontFamily: 'Inter, sans-serif' }}>
+          {cleanLigne}
         </div>
       )
     })
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#060d2e' }}>
+    <div style={{ minHeight: '100vh', background: '#070b18' }}>
+      <PremiumModal />
       <style>{`
         .noise{position:fixed;top:-50%;left:-50%;width:200%;height:200%;opacity:0.03;pointer-events:none;z-index:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")}
         .glass{background:rgba(255,255,255,0.04);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.08)}
@@ -115,10 +188,15 @@ export default function Fiche() {
         .glow-btn:hover{box-shadow:0 0 50px rgba(99,102,241,0.7);transform:scale(1.05)}
         @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
         @media print{
           nav,.no-print{display:none!important}
-          body{background:white!important;color:black!important}
-          .print-content{color:black!important}
+          body{background:white!important;color:black!important;margin:0!important;padding:0!important}
+          .print-content{color:black!important;width:100%!important;max-width:100%!important}
+          .glass{background:white!important;border:none!important;backdrop-filter:none!important;box-shadow:none!important;padding:0!important;width:100%!important;max-width:100%!important}
+          .noise{display:none!important}
+          div[style*="position: fixed"]{display:none!important}
+          .fiche-grid{display:block!important}
         }
       `}</style>
 
@@ -127,28 +205,34 @@ export default function Fiche() {
 
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '40px 24px', position: 'relative', zIndex: 1 }}>
 
-        {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 32 }} className="no-print">
           <div>
             <h1 style={{ fontSize: 28, fontWeight: 900, color: 'white', letterSpacing: '-0.5px', marginBottom: 6, fontFamily: 'Inter, sans-serif' }}>📋 Mes fiches</h1>
             <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, fontFamily: 'Inter, sans-serif' }}>
-              Sélectionne un chapitre pour générer sa fiche par IA.
+              Sélectionne un chapitre pour voir ou générer sa fiche.
             </p>
           </div>
           {selected && fiche && (
-            <button onClick={() => window.print()} className="glow-btn no-print" style={{
-              color: 'white', fontWeight: 700, fontSize: 13,
-              padding: '12px 20px', borderRadius: 12, fontFamily: 'Inter, sans-serif'
-            }}>
-              🖨️ Imprimer
-            </button>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => regenererFiche(selected)} className="no-print" style={{
+                color: 'rgba(255,255,255,0.6)', fontWeight: 600, fontSize: 13, padding: '12px 16px',
+                borderRadius: 12, fontFamily: 'Inter, sans-serif', background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer'
+              }}>
+                🔄 Régénérer
+              </button>
+              <button onClick={() => window.print()} className="glow-btn no-print" style={{
+                color: 'white', fontWeight: 700, fontSize: 13, padding: '12px 20px', borderRadius: 12, fontFamily: 'Inter, sans-serif'
+              }}>
+                🖨️ Imprimer
+              </button>
+            </div>
           )}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: selected ? '280px 1fr' : '1fr', gap: 20 }}>
+        <div className="fiche-grid" style={{ display: 'grid', gridTemplateColumns: selected ? '280px 1fr' : '1fr', gap: 20 }}>
 
-          {/* Liste des cours */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }} className="no-print">
             {cours.length === 0 ? (
               <div className="glass" style={{ borderRadius: 20, padding: 40, textAlign: 'center' }}>
                 <p style={{ fontSize: 40, marginBottom: 12 }}>📭</p>
@@ -163,12 +247,8 @@ export default function Fiche() {
                 onClick={() => genererFiche(c)}
                 style={{
                   borderRadius: 16, padding: '14px 18px',
-                  border: selected?.id === c.id
-                    ? '1px solid rgba(99,102,241,0.6)'
-                    : '1px solid rgba(255,255,255,0.08)',
-                  background: selected?.id === c.id
-                    ? 'rgba(99,102,241,0.15)'
-                    : 'rgba(255,255,255,0.04)',
+                  border: selected?.id === c.id ? '1px solid rgba(99,102,241,0.6)' : '1px solid rgba(255,255,255,0.08)',
+                  background: selected?.id === c.id ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.04)',
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -187,17 +267,11 @@ export default function Fiche() {
             ))}
           </div>
 
-          {/* Fiche générée */}
           {selected && (
             <div className="glass" style={{ borderRadius: 20, padding: 28, minHeight: 400 }}>
               {loading ? (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 300, gap: 20 }}>
-                  <div style={{
-                    width: 48, height: 48, borderRadius: '50%',
-                    border: '3px solid rgba(99,102,241,0.2)',
-                    borderTop: '3px solid #818cf8',
-                    animation: 'spin 1s linear infinite'
-                  }} />
+                  <div style={{ width: 48, height: 48, borderRadius: '50%', border: '3px solid rgba(99,102,241,0.2)', borderTop: '3px solid #38bdf8', animation: 'spin 1s linear infinite' }} />
                   <div style={{ textAlign: 'center' }}>
                     <p style={{ color: 'white', fontWeight: 700, fontSize: 15, fontFamily: 'Inter, sans-serif', marginBottom: 6 }}>
                       🤖 Claude génère ta fiche...
@@ -211,17 +285,41 @@ export default function Fiche() {
                 <div className="print-content">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
                     <div>
-                      <p style={{ color: '#a78bfa', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', marginBottom: 4, fontFamily: 'Inter, sans-serif' }}>FICHE DE RÉVISION • GÉNÉRÉE PAR IA</p>
+                      <p style={{ color: '#7dd3fc', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', marginBottom: 4, fontFamily: 'Inter, sans-serif' }}>FICHE DE RÉVISION • GÉNÉRÉE PAR IA</p>
                       <h2 style={{ color: 'white', fontWeight: 900, fontSize: 20, fontFamily: 'Inter, sans-serif' }}>{selected.chapitre}</h2>
                     </div>
-                    <div style={{
-                      background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.3)',
-                      borderRadius: 100, padding: '4px 12px'
-                    }}>
+                    <div style={{ background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: 100, padding: '4px 12px' }} className="no-print">
                       <span style={{ color: '#86efac', fontSize: 11, fontWeight: 700, fontFamily: 'Inter, sans-serif' }}>✓ Prête</span>
                     </div>
                   </div>
                   <div>{formaterFiche(fiche)}</div>
+
+                  <div className="no-print" style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                    {!explicationAlternative ? (
+                      <button onClick={() => checkAccess(expliquerAutrement)} disabled={loadingExplication} style={{
+                        background: 'rgba(250,204,21,0.1)', outline: '1px solid rgba(250,204,21,0.3)',
+                        border: 'none', color: '#fcd34d', fontWeight: 700, fontSize: 13,
+                        padding: '10px 18px', borderRadius: 10, cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                        opacity: loadingExplication ? 0.6 : 1
+                      }}>
+                        {loadingExplication ? '🤖 Réflexion...' : "🔄 Je n'ai pas compris, explique-moi autrement"}
+                      </button>
+                    ) : (
+                      <div style={{
+                        borderRadius: 14, padding: 18, animation: 'fadeIn 0.4s ease',
+                        background: 'rgba(250,204,21,0.06)', outline: '1px solid rgba(250,204,21,0.2)'
+                      }}>
+                        <p style={{ color: '#fcd34d', fontSize: 11, fontWeight: 700, marginBottom: 8, fontFamily: 'Inter, sans-serif' }}>💡 UNE AUTRE FAÇON DE VOIR</p>
+                        <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, lineHeight: 1.7, fontFamily: 'Inter, sans-serif' }}>{explicationAlternative}</p>
+                        <button onClick={() => checkAccess(expliquerAutrement)} style={{
+                          marginTop: 12, background: 'none', border: 'none', color: '#38bdf8',
+                          fontSize: 12, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 600
+                        }}>
+                          Encore une autre explication →
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ) : null}
             </div>

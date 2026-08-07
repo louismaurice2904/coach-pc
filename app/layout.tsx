@@ -7,9 +7,11 @@ import { ToastProvider } from "./components/Toast";
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'CoachPC — Ton coach IA pour le bac',
+  title: 'Novalys — Ton coach IA pour le bac',
   description: 'Révise la physique-chimie intelligemment avec un coach IA personnalisé.',
-  icons: { icon: '/favicon.ico' }
+  icons: {
+    icon: '/icon.svg',
+  }
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

@@ -19,7 +19,7 @@ function AnimatedSection({ children, delay = 0 }: { children: React.ReactNode, d
   return (
     <div ref={ref} style={{
       opacity: inView ? 1 : 0,
-      transform: inView ? 'translateY(0)' : 'translateY(40px)',
+      transform: inView ? 'translateY(0)' : 'translateY(32px)',
       transition: `opacity 0.7s ease ${delay}s, transform 0.7s ease ${delay}s`
     }}>
       {children}
@@ -27,212 +27,436 @@ function AnimatedSection({ children, delay = 0 }: { children: React.ReactNode, d
   )
 }
 
+function CountUp({ end, suffix = '', duration = 1500 }: { end: number, suffix?: string, duration?: number }) {
+  const { ref, inView } = useInView(0.5)
+  const [count, setCount] = useState(0)
+  useEffect(() => {
+    if (!inView) return
+    const startTime = performance.now()
+    const tick = (now: number) => {
+      const progress = Math.min((now - startTime) / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      setCount(Math.round(eased * end))
+      if (progress < 1) requestAnimationFrame(tick)
+    }
+    requestAnimationFrame(tick)
+  }, [inView])
+  return <span ref={ref}>{count}{suffix}</span>
+}
+
+function MagneticLink({ href, children, className, style, strength = 8 }: { href: string, children: React.ReactNode, className?: string, style?: React.CSSProperties, strength?: number }) {
+  const [offset, setOffset] = useState({ x: 0, y: 0 })
+  const handleMove = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = ((e.clientX - rect.left - rect.width / 2) / rect.width) * strength
+    const y = ((e.clientY - rect.top - rect.height / 2) / rect.height) * strength
+    setOffset({ x, y })
+  }
+  return (
+    <Link
+      href={href}
+      onMouseMove={handleMove}
+      onMouseLeave={() => setOffset({ x: 0, y: 0 })}
+      className={className}
+      style={{ ...style, transform: `translate(${offset.x}px, ${offset.y}px)`, transition: 'transform 0.15s ease-out', display: 'inline-block' }}
+    >
+      {children}
+    </Link>
+  )
+}
+
+function TiltCard({ children }: { children: React.ReactNode }) {
+  const [rot, setRot] = useState({ x: 0, y: 0 })
+  const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const px = (e.clientX - rect.left) / rect.width
+    const py = (e.clientY - rect.top) / rect.height
+    setRot({ x: (py - 0.5) * -8, y: (px - 0.5) * 8 })
+  }
+  return (
+    <div
+      onMouseMove={handleMove}
+      onMouseLeave={() => setRot({ x: 0, y: 0 })}
+      style={{ transform: `perspective(1200px) rotateX(${rot.x}deg) rotateY(${rot.y}deg)`, transition: 'transform 0.2s ease-out' }}
+    >
+      {children}
+    </div>
+  )
+}
+
+function useMousePos() {
+  const [pos, setPos] = useState({ x: -9999, y: -9999 })
+  useEffect(() => {
+    const handle = (e: MouseEvent) => setPos({ x: e.clientX, y: e.clientY })
+    window.addEventListener('mousemove', handle)
+    return () => window.removeEventListener('mousemove', handle)
+  }, [])
+  return pos
+}
+
+function CursorGlow() {
+  const pos = useMousePos()
+  return (
+    <div style={{
+      position: 'fixed', top: 0, left: 0, width: 220, height: 220, borderRadius: '50%',
+      background: 'radial-gradient(circle, rgba(56,189,248,0.06), transparent 70%)',
+      transform: `translate(${pos.x - 110}px, ${pos.y - 110}px)`,
+      pointerEvents: 'none', zIndex: 1, transition: 'transform 0.15s ease-out', filter: 'blur(14px)'
+    }} />
+  )
+}
+
+function ScrollProgressBar() {
+  const [progress, setProgress] = useState(0)
+  useEffect(() => {
+    const handle = () => {
+      const scrollTop = window.scrollY
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight
+      setProgress(docHeight > 0 ? (scrollTop / docHeight) * 100 : 0)
+    }
+    window.addEventListener('scroll', handle)
+    return () => window.removeEventListener('scroll', handle)
+  }, [])
+  return (
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: 2, zIndex: 200, background: 'rgba(255,255,255,0.04)' }}>
+      <div style={{ height: '100%', width: `${progress}%`, background: '#38bdf8', transition: 'width 0.1s linear' }} />
+    </div>
+  )
+}
+
+const chapitresTicker = [
+  { niveau: 'Seconde', nom: 'Constitution de la matière' },
+  { niveau: 'Seconde', nom: 'Mouvement et vitesse' },
+  { niveau: 'Seconde', nom: 'Énergie et ses transferts' },
+  { niveau: 'Première', nom: 'Ondes et signaux' },
+  { niveau: 'Première', nom: 'Transformations chimiques' },
+  { niveau: 'Première', nom: 'Mouvement et interactions' },
+  { niveau: 'Terminale', nom: 'Cinétique chimique' },
+  { niveau: 'Terminale', nom: 'Équilibres acido-basiques' },
+  { niveau: 'Terminale', nom: 'Électrochimie' },
+  { niveau: 'Terminale', nom: 'Ondes et particules' },
+  { niveau: 'Terminale', nom: 'Champs et forces' },
+  { niveau: 'Terminale', nom: 'Chimie organique' },
+]
+
+const programmeComplet = {
+  'Seconde': [
+    'Constitution et transformations de la matière',
+    'Mouvement et interactions',
+    'Ondes et signaux',
+    'Énergie, conversions et transferts',
+    'Description de la matière à l\'échelle macroscopique',
+    'Évolution temporelle d\'un système',
+    'Description d\'un fluide au repos',
+    'Sécurité et prévention des risques chimiques',
+  ],
+  'Première': [
+    'Ondes et signaux',
+    'Transformations chimiques',
+    'Mouvement et interactions mécaniques',
+    'Énergie : conversion et stockage',
+    'Suivi de l\'évolution d\'un système chimique',
+    'Quantité de matière et concentration',
+    'Structures et propriétés des entités organiques',
+    'Mouvement dans un champ',
+    'Réactions acido-basiques',
+    'Structure microscopique et propriétés macroscopiques',
+  ],
+  'Terminale': [
+    'Cinétique chimique',
+    'Équilibres acido-basiques',
+    'Électrochimie',
+    'Ondes et particules',
+    'Champs et forces',
+    'Chimie organique',
+    'Avancement et modélisation d\'un système',
+    'Titrages et dosages',
+    'Mouvement dans un champ uniforme',
+    'Temps, mouvement et évolution',
+    'Structure et transformation de la matière',
+    'Conversion et transfert d\'énergie',
+  ],
+}
+
 export default function Home() {
   const [scrollY, setScrollY] = useState(0)
+  const [dashStep, setDashStep] = useState(0)
+  const [niveauActif, setNiveauActif] = useState<'Seconde' | 'Première' | 'Terminale'>('Terminale')
+  const [activeTab, setActiveTab] = useState<'fiche' | 'exercice' | 'planning' | 'controle'>('fiche')
+
   useEffect(() => {
     const handle = () => setScrollY(window.scrollY)
     window.addEventListener('scroll', handle)
     return () => window.removeEventListener('scroll', handle)
   }, [])
 
+  useEffect(() => {
+    const t = setInterval(() => setDashStep(p => (p + 1) % 4), 4500)
+    return () => clearInterval(t)
+  }, [])
+
+  const tabs = [
+    { id: 'fiche', label: 'Fiche', url: 'fiche' },
+    { id: 'exercice', label: 'Exercices', url: 'exercices' },
+    { id: 'planning', label: 'Planning', url: 'planning' },
+    { id: 'controle', label: 'Contrôle', url: 'bac-blanc' },
+  ] as const
+
   return (
-    <div style={{ background: '#060d2e', minHeight: '100vh', overflowX: 'hidden' }}>
+    <div style={{ background: '#070b18', minHeight: '100vh', overflowX: 'hidden', position: 'relative' }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
         * { font-family: 'Inter', sans-serif; }
-        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
-        @keyframes shimmer {
-          0%{background-position:-200% center}
-          100%{background-position:200% center}
-        }
-        @keyframes noise {
-          0%,100%{transform:translate(0,0)}
-          10%{transform:translate(-1%,-1%)}
-          20%{transform:translate(1%,1%)}
-          30%{transform:translate(-1%,1%)}
-          40%{transform:translate(1%,-1%)}
-          50%{transform:translate(-1%,0)}
-          60%{transform:translate(1%,0)}
-          70%{transform:translate(0,-1%)}
-          80%{transform:translate(0,1%)}
-          90%{transform:translate(-1%,1%)}
-        }
+        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+        @keyframes shimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
+        @keyframes gridDrift { from{background-position:0 0, 0 0} to{background-position:60px 60px, 60px 60px} }
+        @keyframes marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+        @keyframes bounceArrow { 0%,100%{transform:translateY(0)} 50%{transform:translateY(8px)} }
+        @keyframes tabFadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes pulseDot { 0%,100%{opacity:1} 50%{opacity:0.4} }
         .shimmer {
-          background: linear-gradient(90deg, #fff 0%, #60a5fa 40%, #a78bfa 60%, #fff 100%);
-          background-size: 200% auto;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          animation: shimmer 4s linear infinite;
+          background: linear-gradient(90deg, #fff 0%, #38bdf8 45%, #fff 100%);
+          background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+          animation: shimmer 5s linear infinite;
         }
-        .glow-btn {
-          background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-          box-shadow: 0 0 30px rgba(99,102,241,0.5);
-          transition: all 0.3s ease;
+        .btn-primary { background: #fff; color: #070b18; transition: opacity 0.2s ease; }
+        .btn-primary:hover { opacity: 0.85; }
+        .btn-secondary { background: transparent; border: 1px solid rgba(255,255,255,0.16); color: rgba(255,255,255,0.85); transition: all 0.2s ease; }
+        .btn-secondary:hover { border-color: rgba(255,255,255,0.35); background: rgba(255,255,255,0.03); }
+        .card { background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.08); }
+        .card-hover { transition: border-color 0.25s ease, transform 0.25s ease; }
+        .card-hover:hover { border-color: rgba(255,255,255,0.2); transform: translateY(-2px); }
+        .grid-bg {
+          position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.4;
+          background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+          background-size: 56px 56px;
+          -webkit-mask-image: radial-gradient(ellipse 55% 45% at 50% 25%, black 20%, transparent 70%);
+          mask-image: radial-gradient(ellipse 55% 45% at 50% 25%, black 20%, transparent 70%);
+          animation: gridDrift 8s linear infinite;
         }
-        .glow-btn:hover {
-          box-shadow: 0 0 50px rgba(99,102,241,0.8);
-          transform: scale(1.05);
+        .step-line { position: relative; }
+        .step-line::before {
+          content: ''; position: absolute; left: 23px; top: 52px; bottom: -36px; width: 1px;
+          background: rgba(255,255,255,0.12);
         }
-        .glass {
-          background: rgba(255,255,255,0.04);
-          backdrop-filter: blur(20px);
-          border: 1px solid rgba(255,255,255,0.08);
-        }
-        .card-hover { transition: all 0.3s ease; }
-        .card-hover:hover {
-          transform: translateY(-6px);
-          background: rgba(255,255,255,0.07) !important;
-          border-color: rgba(99,102,241,0.4) !important;
-        }
-        .noise {
-          position: fixed; top: -50%; left: -50%;
-          width: 200%; height: 200%;
-          opacity: 0.03; pointer-events: none; z-index: 1;
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-          animation: noise 0.5s steps(2) infinite;
-        }
+        .step-line:last-child::before { display: none; }
+        .divider { height: 1px; background: rgba(255,255,255,0.08); margin: 0 auto; max-width: 640px; }
+        .tab-btn { transition: all 0.2s ease; }
+        .marquee-track { display: flex; gap: 12px; width: max-content; animation: marquee 42s linear infinite; }
+        .marquee-wrap:hover .marquee-track { animation-play-state: paused; }
+        .scroll-hint { animation: bounceArrow 2s ease-in-out infinite; }
+        .eyebrow { color: #38bdf8; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; }
       `}</style>
 
-      <div className="noise" />
-
-      {/* Blobs */}
-      <div style={{ position: 'fixed', top: -200, right: -200, width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.3), transparent 70%)', pointerEvents: 'none', zIndex: 0, transform: `translateY(${scrollY * 0.2}px)` }} />
-      <div style={{ position: 'fixed', bottom: -200, left: -200, width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.25), transparent 70%)', pointerEvents: 'none', zIndex: 0, transform: `translateY(${-scrollY * 0.15}px)` }} />
+      <div className="grid-bg" />
+      <CursorGlow />
+      <ScrollProgressBar />
+      <div style={{ position: 'fixed', top: -240, right: -200, width: 560, height: 560, borderRadius: '50%', background: 'radial-gradient(circle, rgba(56,189,248,0.08), transparent 70%)', pointerEvents: 'none', zIndex: 0, transform: `translateY(${scrollY * 0.15}px)` }} />
 
       {/* Navbar */}
       <nav style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-        padding: '0 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64,
-        background: scrollY > 50 ? 'rgba(6,13,46,0.9)' : 'transparent',
-        backdropFilter: scrollY > 50 ? 'blur(20px)' : 'none',
-        borderBottom: scrollY > 50 ? '1px solid rgba(255,255,255,0.06)' : 'none',
+        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, padding: '0 40px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64,
+        background: scrollY > 50 ? 'rgba(7,11,24,0.92)' : 'transparent',
+        backdropFilter: scrollY > 50 ? 'blur(16px)' : 'none',
+        borderBottom: scrollY > 50 ? '1px solid rgba(255,255,255,0.06)' : '1px solid transparent',
         transition: 'all 0.3s ease'
       }}>
-        <span style={{ color: 'white', fontWeight: 900, fontSize: 20, letterSpacing: '-0.5px' }}>
-          <img src="/logo.svg" alt="CoachPC" style={{ height: 32 }} />
-        </span>
+        <img src="/logo.svg" alt="Novalys" style={{ height: 28 }} />
         <div style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
-          {['Fonctionnalités', 'Tarifs', 'FAQ'].map(item => (
-            <a key={item} href={`#${item.toLowerCase()}`} style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, textDecoration: 'none', transition: 'color 0.2s' }}
+          {['Fonctionnalités', 'Démo', 'Programme', 'Tarifs', 'FAQ'].map(item => (
+            <a key={item} href={`#${item.toLowerCase()}`} style={{ color: 'rgba(255,255,255,0.55)', fontSize: 14, textDecoration: 'none', transition: 'color 0.2s' }}
               onMouseEnter={e => (e.target as HTMLElement).style.color = 'white'}
-              onMouseLeave={e => (e.target as HTMLElement).style.color = 'rgba(255,255,255,0.6)'}
+              onMouseLeave={e => (e.target as HTMLElement).style.color = 'rgba(255,255,255,0.55)'}
             >{item}</a>
           ))}
         </div>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <Link href="/connexion" style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14, textDecoration: 'none' }}>Se connecter</Link>
-          <Link href="/inscription" className="glow-btn" style={{ color: 'white', fontSize: 14, fontWeight: 700, padding: '10px 20px', borderRadius: 12, textDecoration: 'none' }}>
-            Essai gratuit →
-          </Link>
+          <Link href="/connexion" style={{ color: 'rgba(255,255,255,0.65)', fontSize: 14, textDecoration: 'none' }}>Se connecter</Link>
+          <MagneticLink href="/inscription" className="btn-primary" style={{ fontSize: 14, fontWeight: 700, padding: '10px 20px', borderRadius: 10, textDecoration: 'none' }}>
+            Essai gratuit
+          </MagneticLink>
         </div>
       </nav>
 
       {/* Hero */}
-      <div style={{ position: 'relative', zIndex: 2, minHeight: '100vh', display: 'flex', alignItems: 'center', padding: '100px 40px 60px' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center' }}>
+      <div style={{ position: 'relative', zIndex: 2, minHeight: '92vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '110px 40px 40px' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%', display: 'grid', gridTemplateColumns: '1.05fr 0.95fr', gap: 60, alignItems: 'center' }}>
           <div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: 100, padding: '6px 16px', marginBottom: 32 }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#818cf8', display: 'inline-block' }} />
-              <span style={{ color: '#a5b4fc', fontSize: 12, fontWeight: 600, letterSpacing: '0.05em' }}>PHYSIQUE-CHIMIE · BAC 2026</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 28 }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#38bdf8', display: 'inline-block', animation: 'pulseDot 2s ease-in-out infinite' }} />
+              <span className="eyebrow">PHYSIQUE-CHIMIE · SECONDE À TERMINALE</span>
             </div>
-            <h1 style={{ fontSize: 72, fontWeight: 900, lineHeight: 1.05, marginBottom: 24, letterSpacing: '-2px' }}>
-              <span style={{ color: 'white' }}>Arrête de</span><br />
-              <span style={{ color: 'white' }}>réviser</span>{' '}
-              <span className="shimmer">dans le vide.</span>
+            <h1 style={{ fontSize: 62, fontWeight: 900, lineHeight: 1.05, marginBottom: 26, letterSpacing: '-2px', color: 'white' }}>
+              Comprendre. <span className="shimmer">Mémoriser.</span><br />Progresser.
             </h1>
-            <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 18, lineHeight: 1.7, marginBottom: 40, maxWidth: 480 }}>
-              CoachPC analyse tes cours, génère tes fiches, crée tes exercices et planifie tes révisions — automatiquement, jusqu'au bac.
+            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 18, lineHeight: 1.7, marginBottom: 40, maxWidth: 460 }}>
+              Novalys transforme chaque cours de physique-chimie en un plan de travail clair — fiches, exercices et suivi générés par IA, de la Seconde à la Terminale.
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <Link href="/inscription" className="glow-btn" style={{ color: 'white', fontWeight: 700, fontSize: 16, padding: '16px 32px', borderRadius: 14, textDecoration: 'none', display: 'inline-block' }}>
-                Commencer gratuitement →
-              </Link>
-              <Link href="/connexion" style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 600, fontSize: 16, padding: '16px 32px', borderRadius: 14, textDecoration: 'none', display: 'inline-block', border: '1px solid rgba(255,255,255,0.15)' }}>
+              <MagneticLink href="/inscription" className="btn-primary" style={{ fontWeight: 700, fontSize: 16, padding: '15px 30px', borderRadius: 12, textDecoration: 'none' }}>
+                Commencer gratuitement
+              </MagneticLink>
+              <MagneticLink href="/connexion" className="btn-secondary" style={{ fontWeight: 600, fontSize: 16, padding: '15px 30px', borderRadius: 12, textDecoration: 'none' }}>
                 J'ai déjà un compte
-              </Link>
+              </MagneticLink>
             </div>
-            <div style={{ display: 'flex', gap: 32, marginTop: 48 }}>
+            <div style={{ display: 'flex', gap: 40, marginTop: 52 }}>
               {[
-  { value: '12', label: 'chapitres du programme' },
-  { value: '100%', label: 'conforme au bac' },
-  { value: '0€', label: 'pour démarrer' },
-  { value: '200+', label: 'élèves inscrits' },
-].map(s => (
-  <div key={s.label}>
-    <p style={{ fontSize: 28, fontWeight: 900, color: 'white', marginBottom: 2 }}>{s.value}</p>
-    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>{s.label}</p>
-  </div>
-))}
+                { value: 3, suffix: '', label: 'niveaux couverts' },
+                { value: 30, suffix: '', label: 'chapitres au programme' },
+                { value: 0, suffix: '€', label: 'pour démarrer' },
+              ].map(s => (
+                <div key={s.label}>
+                  <p style={{ fontSize: 26, fontWeight: 800, color: 'white', marginBottom: 2 }}><CountUp end={s.value} suffix={s.suffix} /></p>
+                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>{s.label}</p>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Mock-up */}
-          <div style={{ display: 'flex', justifyContent: 'center', animation: 'float 4s ease-in-out infinite' }}>
-            <div style={{ width: 340, borderRadius: 24, overflow: 'hidden', background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 40px 80px rgba(0,0,0,0.6)' }}>
-              <div style={{ background: '#1a237e', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ color: 'white', fontWeight: 800, fontSize: 14 }}>Coach<span style={{ color: '#818cf8' }}>PC</span></span>
-                <div style={{ display: 'flex', gap: 6 }}>
-                  {['#ef4444','#f59e0b','#22c55e'].map(c => <div key={c} style={{ width: 10, height: 10, borderRadius: '50%', background: c }} />)}
-                </div>
-              </div>
-              <div style={{ padding: 20 }}>
-                <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, marginBottom: 4 }}>TABLEAU DE BORD</p>
-                <p style={{ color: 'white', fontWeight: 700, fontSize: 16, marginBottom: 16 }}>Bonjour Emma 👋</p>
-                <div style={{ background: 'linear-gradient(135deg, #1565c0, #7c3aed)', borderRadius: 12, padding: 14, marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 10 }}>Jours avant le bac</p>
-                    <p style={{ color: 'white', fontWeight: 900, fontSize: 28 }}>47</p>
-                  </div>
-                  <span style={{ fontSize: 28 }}>⏱️</span>
-                </div>
-                <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 12, padding: 14, marginBottom: 12 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <span style={{ color: 'white', fontSize: 12, fontWeight: 600 }}>Progression globale</span>
-                    <span style={{ color: '#60a5fa', fontSize: 12, fontWeight: 700 }}>67%</span>
-                  </div>
-                  <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 99, height: 6 }}>
-                    <div style={{ background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)', borderRadius: 99, height: 6, width: '67%', boxShadow: '0 0 8px #3b82f6' }} />
+          {/* Mock-up dense */}
+          <div style={{ display: 'flex', justifyContent: 'center', animation: 'float 4.5s ease-in-out infinite' }}>
+            <TiltCard>
+              <div style={{ width: 350, borderRadius: 16, overflow: 'hidden', background: '#0c1120', border: '1px solid rgba(255,255,255,0.09)', boxShadow: '0 30px 70px rgba(0,0,0,0.5)' }}>
+                <div style={{ background: '#10182c', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                  <span style={{ color: 'white', fontWeight: 700, fontSize: 13 }}>Nova<span style={{ color: '#38bdf8' }}>lys</span></span>
+                  <div style={{ display: 'flex', gap: 5 }}>
+                    {['#5f5f66', '#5f5f66', '#5f5f66'].map((c, i) => <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: c }} />)}
                   </div>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
-                  {[{ label: 'Cours', value: '8', color: '#3b82f6' }, { label: 'Exercices', value: '34', color: '#22c55e' }].map(s => (
-                    <div key={s.label} style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 10, padding: 10 }}>
-                      <p style={{ color: s.color, fontWeight: 900, fontSize: 20 }}>{s.value}</p>
-                      <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>{s.label}</p>
+                <div style={{ padding: 20, minHeight: 320 }}>
+                  {dashStep === 0 && (
+                    <div style={{ animation: 'float 0.5s ease' }}>
+                      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, marginBottom: 4, letterSpacing: '0.06em' }}>TABLEAU DE BORD</p>
+                      <p style={{ color: 'white', fontWeight: 700, fontSize: 15, marginBottom: 16 }}>Bonjour Emma</p>
+                      <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: 14, marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10 }}>Jours avant le bac</p>
+                          <p style={{ color: 'white', fontWeight: 800, fontSize: 24 }}>47</p>
+                        </div>
+                        <span style={{ color: '#38bdf8', fontSize: 11, fontWeight: 700 }}>J-47</span>
+                      </div>
+                      <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: 14 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                          <span style={{ color: 'white', fontSize: 11, fontWeight: 600 }}>Progression</span>
+                          <span style={{ color: '#38bdf8', fontSize: 11, fontWeight: 700 }}>67%</span>
+                        </div>
+                        <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 99, height: 4 }}>
+                          <div style={{ background: '#38bdf8', borderRadius: 99, height: 4, width: '67%' }} />
+                        </div>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 10 }}>
+                        <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: 10, textAlign: 'center' }}>
+                          <p style={{ color: 'white', fontWeight: 800, fontSize: 15 }}>7</p>
+                          <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 9 }}>jours d'affilée</p>
+                        </div>
+                        <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: 10, textAlign: 'center' }}>
+                          <p style={{ color: 'white', fontWeight: 800, fontSize: 15 }}>8</p>
+                          <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 9 }}>cours importés</p>
+                        </div>
+                      </div>
                     </div>
+                  )}
+                  {dashStep === 1 && (
+                    <div style={{ animation: 'float 0.5s ease' }}>
+                      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, marginBottom: 4, letterSpacing: '0.06em' }}>FICHE · GÉNÉRÉE PAR IA</p>
+                      <p style={{ color: 'white', fontWeight: 700, fontSize: 14, marginBottom: 14 }}>Cinétique chimique</p>
+                      <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: 12, marginBottom: 8 }}>
+                        <p style={{ color: '#38bdf8', fontSize: 10, fontWeight: 700, marginBottom: 4 }}>POINTS CLÉS</p>
+                        <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 11, lineHeight: 1.6 }}>La vitesse de réaction dépend de la concentration, température et catalyseur.</p>
+                      </div>
+                      <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: 12 }}>
+                        <p style={{ color: '#38bdf8', fontSize: 10, fontWeight: 700, marginBottom: 4 }}>FORMULE</p>
+                        <p style={{ color: 'white', fontSize: 12, fontFamily: 'monospace' }}>v = -d[A]/dt</p>
+                      </div>
+                    </div>
+                  )}
+                  {dashStep === 2 && (
+                    <div style={{ animation: 'float 0.5s ease' }}>
+                      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, marginBottom: 4, letterSpacing: '0.06em' }}>EXERCICE</p>
+                      <p style={{ color: 'white', fontWeight: 600, fontSize: 12, marginBottom: 14, lineHeight: 1.5 }}>Quel facteur n'influence pas la vitesse de réaction ?</p>
+                      {['La température', 'La couleur du récipient', 'La concentration'].map((opt, i) => (
+                        <div key={opt} style={{
+                          padding: '9px 12px', borderRadius: 8, marginBottom: 7, fontSize: 11,
+                          background: i === 1 ? 'rgba(56,189,248,0.12)' : 'rgba(255,255,255,0.03)',
+                          border: i === 1 ? '1px solid rgba(56,189,248,0.35)' : '1px solid rgba(255,255,255,0.06)',
+                          color: i === 1 ? '#7dd3fc' : 'rgba(255,255,255,0.5)'
+                        }}>
+                          {opt} {i === 1 && '✓'}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {dashStep === 3 && (
+                    <div style={{ animation: 'float 0.5s ease' }}>
+                      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, marginBottom: 4, letterSpacing: '0.06em' }}>CORRECTION IA</p>
+                      <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: 13, marginBottom: 10 }}>
+                        <p style={{ color: '#7dd3fc', fontSize: 11, fontWeight: 700, marginBottom: 6 }}>Correct</p>
+                        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, lineHeight: 1.6 }}>Ta démarche est juste, tu as bien identifié la relation entre concentration et vitesse.</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: 5, justifyContent: 'center', padding: '0 20px 16px' }}>
+                  {[0, 1, 2, 3].map(i => (
+                    <div key={i} style={{ width: dashStep === i ? 16 : 5, height: 5, borderRadius: 3, background: dashStep === i ? '#38bdf8' : 'rgba(255,255,255,0.12)', transition: 'all 0.3s' }} />
                   ))}
                 </div>
-                <div style={{ background: 'rgba(250,204,21,0.1)', border: '1px solid rgba(250,204,21,0.2)', borderRadius: 10, padding: 10 }}>
-                  <p style={{ color: '#fcd34d', fontSize: 10, fontWeight: 700, marginBottom: 3 }}>💡 Conseil du jour</p>
-                  <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 10, lineHeight: 1.5 }}>Révise la cinétique chimique avant ton DS de vendredi.</p>
-                </div>
               </div>
-            </div>
+            </TiltCard>
           </div>
+        </div>
+
+        <div className="scroll-hint" style={{ textAlign: 'center', marginTop: 48, color: 'rgba(255,255,255,0.2)', fontSize: 20 }}>↓</div>
+      </div>
+
+      {/* Problème */}
+      <div style={{ position: 'relative', zIndex: 2, padding: '30px 40px 100px' }}>
+        <div style={{ maxWidth: 760, margin: '0 auto', textAlign: 'center' }}>
+          <AnimatedSection>
+            <p className="eyebrow" style={{ marginBottom: 18 }}>LE PROBLÈME</p>
+            <h2 style={{ fontSize: 34, fontWeight: 800, color: 'white', marginBottom: 22, letterSpacing: '-0.5px', lineHeight: 1.35 }}>
+              Réviser seul, sans savoir par où commencer, ni si tu progresses vraiment.
+            </h2>
+            <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 16, lineHeight: 1.8 }}>
+              Tu as ton cours, tes annales, peut-être une IA générique — mais rien ne te dit précisément quoi travailler, ni si tes réponses sont vraiment justes. Résultat : des heures de révision sans réelle progression.
+            </p>
+          </AnimatedSection>
         </div>
       </div>
 
-      {/* Features */}
-      <div id="fonctionnalités" style={{ position: 'relative', zIndex: 2, padding: '80px 40px' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+      <div className="divider" />
+
+      {/* Comment ça marche */}
+      <div style={{ position: 'relative', zIndex: 2, padding: '100px 40px 100px' }}>
+        <div style={{ maxWidth: 680, margin: '0 auto' }}>
           <AnimatedSection>
-            <h2 style={{ fontSize: 48, fontWeight: 900, color: 'white', textAlign: 'center', marginBottom: 16, letterSpacing: '-1px' }}>Tout ce dont tu as besoin</h2>
-            <p style={{ color: 'rgba(255,255,255,0.45)', textAlign: 'center', fontSize: 18, marginBottom: 60 }}>Un seul outil. Toute ta physique-chimie.</p>
+            <p className="eyebrow" style={{ textAlign: 'center', marginBottom: 18 }}>LA MÉTHODE</p>
+            <h2 style={{ fontSize: 38, fontWeight: 800, color: 'white', textAlign: 'center', marginBottom: 56, letterSpacing: '-1px' }}>
+              Comment ça marche.
+            </h2>
           </AnimatedSection>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 44 }}>
             {[
-              { icon: '📚', title: 'Import de cours', desc: 'Colle ton cours ou prends une photo. Une fiche claire est générée en quelques secondes.', color: '#3b82f6', delay: 0 },
-              { icon: '✏️', title: 'Exercices adaptatifs', desc: 'Des exercices au format bac, calibrés à ton niveau, qui s\'ajustent selon tes erreurs.', color: '#8b5cf6', delay: 0.1 },
-              { icon: '📈', title: 'Suivi de progression', desc: 'Visualise tes forces et lacunes chapitre par chapitre. Sache exactement où tu en es.', color: '#22c55e', delay: 0.2 },
-              { icon: '📅', title: 'Planning intelligent', desc: 'Un planning personnalisé chaque semaine selon ton temps disponible et tes objectifs.', color: '#f59e0b', delay: 0.3 },
-              { icon: '🔔', title: 'Notifications', desc: 'Rappels intelligents si tu ne travailles pas assez. Ton coach ne te laisse pas décrocher.', color: '#ef4444', delay: 0.4 },
-              { icon: '🖨️', title: 'Impression des fiches', desc: 'Imprime tes fiches de révision en un clic, avec une mise en page optimisée pour le papier.', color: '#06b6d4', delay: 0.5 },
-            ].map(f => (
-              <AnimatedSection key={f.title} delay={f.delay}>
-                <div className="glass card-hover" style={{ borderRadius: 20, padding: 28, height: '100%' }}>
-                  <div style={{ width: 48, height: 48, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${f.color}20`, border: `1px solid ${f.color}40`, fontSize: 22, marginBottom: 16 }}>{f.icon}</div>
-                  <h3 style={{ color: 'white', fontWeight: 700, fontSize: 16, marginBottom: 8 }}>{f.title}</h3>
-                  <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 14, lineHeight: 1.7 }}>{f.desc}</p>
+              { num: '01', titre: 'Importe ton cours.', desc: 'Colle ton cours, prends une photo, ou upload un PDF. Novalys lit et comprend le contenu instantanément.' },
+              { num: '02', titre: 'Reçois ta fiche.', desc: 'Une fiche de révision claire et structurée : points clés, formules, définitions, méthode.' },
+              { num: '03', titre: "T'entraîne avec des exercices.", desc: 'Des exercices adaptés à ton niveau exact, avec correction immédiate et explications personnalisées.' },
+              { num: '04', titre: 'Suis ta progression.', desc: 'Visualise tes points forts et lacunes, chapitre par chapitre, et sache où concentrer tes efforts.' },
+            ].map((step, i) => (
+              <AnimatedSection key={step.num} delay={i * 0.08}>
+                <div className="step-line" style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+                  <div style={{
+                    width: 48, height: 48, borderRadius: 10, flexShrink: 0,
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, color: '#38bdf8'
+                  }}>
+                    {step.num}
+                  </div>
+                  <div>
+                    <h3 style={{ color: 'white', fontWeight: 700, fontSize: 19, marginBottom: 8 }}>{step.titre}</h3>
+                    <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 15, lineHeight: 1.7, maxWidth: 480 }}>{step.desc}</p>
+                  </div>
                 </div>
               </AnimatedSection>
             ))}
@@ -240,47 +464,375 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Tarifs */}
-      <div id="tarifs" style={{ position: 'relative', zIndex: 2, padding: '80px 40px' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto' }}>
+      <div className="divider" />
+
+      {/* Ce que Novalys sait de toi — remplace la comparaison ChatGPT */}
+      <div style={{ position: 'relative', zIndex: 2, padding: '100px 40px 100px' }}>
+        <div style={{ maxWidth: 1000, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center' }}>
           <AnimatedSection>
-            <h2 style={{ fontSize: 48, fontWeight: 900, color: 'white', textAlign: 'center', marginBottom: 16, letterSpacing: '-1px' }}>Tarifs simples</h2>
-            <p style={{ color: 'rgba(255,255,255,0.45)', textAlign: 'center', fontSize: 18, marginBottom: 60 }}>Commence gratuitement. Passe Premium quand tu es prêt.</p>
+            <p className="eyebrow" style={{ marginBottom: 18 }}>LA MÉMOIRE</p>
+            <h2 style={{ fontSize: 34, fontWeight: 800, color: 'white', marginBottom: 22, letterSpacing: '-0.5px', lineHeight: 1.3 }}>
+              Un chat oublie tout à la fin de la conversation.<br />Novalys, non.
+            </h2>
+            <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 16, lineHeight: 1.8, marginBottom: 20 }}>
+              Chaque chapitre travaillé, chaque erreur commise, chaque contrôle à venir — Novalys s'en souvient et construit ton suivi autour, jour après jour.
+            </p>
+            <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 16, lineHeight: 1.8 }}>
+              Pas besoin de tout réexpliquer à chaque fois. Le contexte est déjà là.
+            </p>
           </AnimatedSection>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-            <AnimatedSection delay={0}>
-              <div className="glass" style={{ borderRadius: 24, padding: 36, height: '100%' }}>
-                <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, fontWeight: 600, marginBottom: 8 }}>GRATUIT</p>
-                <p style={{ color: 'white', fontWeight: 900, fontSize: 48, marginBottom: 4 }}>0€</p>
-                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, marginBottom: 32 }}>Pour toujours</p>
-                {['Import de cours (texte)', 'Fiches de révision basiques', 'Suivi de progression', 'Dashboard personnalisé'].map(f => (
-                  <div key={f} style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 14 }}>
-                    <span style={{ color: '#22c55e', fontSize: 16 }}>✓</span>
-                    <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: 14 }}>{f}</span>
+
+          <AnimatedSection delay={0.1}>
+            <div className="card" style={{ borderRadius: 16, padding: 28 }}>
+              <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', marginBottom: 18 }}>CE QUE NOVALYS RETIENT</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {[
+                  { label: 'Cinétique chimique', valeur: '62% maîtrisé' },
+                  { label: 'Équilibres acido-basiques', valeur: '3 erreurs à revoir' },
+                  { label: 'Série de révision', valeur: '7 jours d\'affilée' },
+                  { label: 'Prochain contrôle', valeur: 'dans 4 jours' },
+                  { label: 'Niveau scolaire', valeur: 'Terminale' },
+                ].map((item, i) => (
+                  <div key={item.label} style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    padding: '12px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.06)'
+                  }}>
+                    <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: 13 }}>{item.label}</span>
+                    <span style={{ color: '#7dd3fc', fontSize: 13, fontWeight: 700 }}>{item.valeur}</span>
                   </div>
                 ))}
-                <Link href="/inscription" style={{ display: 'block', textAlign: 'center', color: 'white', fontWeight: 700, fontSize: 15, padding: '14px', borderRadius: 12, textDecoration: 'none', marginTop: 32, border: '1px solid rgba(255,255,255,0.2)' }}>
+              </div>
+            </div>
+          </AnimatedSection>
+        </div>
+      </div>
+
+      <div className="divider" />
+
+      {/* Programme complet */}
+      <div id="programme" style={{ position: 'relative', zIndex: 2, padding: '100px 40px 60px' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto' }}>
+          <AnimatedSection>
+            <p className="eyebrow" style={{ textAlign: 'center', marginBottom: 18 }}>LE PROGRAMME</p>
+            <h2 style={{ fontSize: 38, fontWeight: 800, color: 'white', textAlign: 'center', marginBottom: 12, letterSpacing: '-1px' }}>
+              Adapté à ton niveau.
+            </h2>
+            <p style={{ color: 'rgba(255,255,255,0.45)', textAlign: 'center', fontSize: 16, marginBottom: 40 }}>
+              De la Seconde à la Terminale, le programme complet couvert par Novalys.
+            </p>
+          </AnimatedSection>
+
+          <AnimatedSection delay={0.1}>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 36 }}>
+              {(['Seconde', 'Première', 'Terminale'] as const).map(n => (
+                <button key={n} onClick={() => setNiveauActif(n)} style={{
+                  padding: '10px 24px', borderRadius: 100, border: '1px solid', cursor: 'pointer',
+                  fontWeight: 700, fontSize: 13, transition: 'all 0.2s',
+                  background: niveauActif === n ? 'white' : 'transparent',
+                  color: niveauActif === n ? '#070b18' : 'rgba(255,255,255,0.5)',
+                  borderColor: niveauActif === n ? 'white' : 'rgba(255,255,255,0.15)',
+                }}>
+                  {n}
+                </button>
+              ))}
+            </div>
+
+            <div className="card" style={{ borderRadius: 16, padding: 32 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 32px' }}>
+                {programmeComplet[niveauActif].map((chap, i) => (
+                  <div key={chap} style={{ display: 'flex', alignItems: 'baseline', gap: 12, padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12, fontWeight: 700, width: 20, flexShrink: 0 }}>{String(i + 1).padStart(2, '0')}</span>
+                    <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14 }}>{chap}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </AnimatedSection>
+        </div>
+      </div>
+
+      {/* Ticker chapitres */}
+      <div style={{ position: 'relative', zIndex: 2, padding: '40px 0 100px' }}>
+        <div className="marquee-wrap" style={{ overflow: 'hidden', position: 'relative' }}>
+          <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 80, background: 'linear-gradient(90deg, #070b18, transparent)', zIndex: 2, pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 80, background: 'linear-gradient(-90deg, #070b18, transparent)', zIndex: 2, pointerEvents: 'none' }} />
+          <div className="marquee-track">
+            {[...chapitresTicker, ...chapitresTicker].map((c, i) => (
+              <div key={i} style={{
+                display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0,
+                background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.07)',
+                borderRadius: 100, padding: '9px 16px'
+              }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: '#7dd3fc' }}>{c.niveau}</span>
+                <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12, whiteSpace: 'nowrap' }}>{c.nom}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="divider" />
+
+      {/* Démo produit */}
+      <div id="démo" style={{ position: 'relative', zIndex: 2, padding: '100px 40px 100px' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto' }}>
+          <AnimatedSection>
+            <p className="eyebrow" style={{ textAlign: 'center', marginBottom: 18 }}>LA DÉMO</p>
+            <h2 style={{ fontSize: 38, fontWeight: 800, color: 'white', textAlign: 'center', marginBottom: 12, letterSpacing: '-1px' }}>
+              Vois Novalys en action.
+            </h2>
+            <p style={{ color: 'rgba(255,255,255,0.45)', textAlign: 'center', fontSize: 16, marginBottom: 40 }}>
+              Explore les fonctionnalités principales, directement ci-dessous.
+            </p>
+          </AnimatedSection>
+
+          <AnimatedSection delay={0.1}>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 24, flexWrap: 'wrap' }}>
+              {tabs.map(tab => (
+                <button key={tab.id} onClick={() => setActiveTab(tab.id)} className="tab-btn" style={{
+                  padding: '9px 18px', borderRadius: 10, border: '1px solid', cursor: 'pointer',
+                  fontWeight: 700, fontSize: 13, fontFamily: 'Inter, sans-serif',
+                  background: activeTab === tab.id ? 'white' : 'transparent',
+                  color: activeTab === tab.id ? '#070b18' : 'rgba(255,255,255,0.5)',
+                  borderColor: activeTab === tab.id ? 'white' : 'rgba(255,255,255,0.14)',
+                }}>
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.09)' }}>
+              <div style={{ background: '#0c1120', padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <div style={{ display: 'flex', gap: 5 }}>
+                  {[0, 1, 2].map(i => <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: '#5f5f66' }} />)}
+                </div>
+                <div style={{ flex: 1, background: 'rgba(255,255,255,0.04)', borderRadius: 6, padding: '5px 12px', fontSize: 12, color: 'rgba(255,255,255,0.35)', fontFamily: 'monospace' }}>
+                  novalys.fr/{tabs.find(t => t.id === activeTab)?.url}
+                </div>
+              </div>
+              <div key={activeTab} style={{ background: '#0a0e1c', padding: 32, minHeight: 300, animation: 'tabFadeIn 0.3s ease' }}>
+                {activeTab === 'fiche' && (
+                  <div>
+                    <p style={{ color: '#38bdf8', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', marginBottom: 10 }}>FICHE DE RÉVISION</p>
+                    <h3 style={{ color: 'white', fontWeight: 800, fontSize: 19, marginBottom: 20 }}>Cinétique chimique</h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                      <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: 16 }}>
+                        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: 700, marginBottom: 8 }}>POINTS CLÉS</p>
+                        <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 13, lineHeight: 1.7 }}>La vitesse de réaction dépend de la concentration, la température et la présence d'un catalyseur.</p>
+                      </div>
+                      <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: 16 }}>
+                        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: 700, marginBottom: 8 }}>FORMULES</p>
+                        <p style={{ color: 'white', fontSize: 13, fontFamily: 'monospace', marginBottom: 6 }}>v = -d[A]/dt</p>
+                        <p style={{ color: 'white', fontSize: 13, fontFamily: 'monospace' }}>t½ = ln(2)/k</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {activeTab === 'exercice' && (
+                  <div>
+                    <p style={{ color: '#38bdf8', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', marginBottom: 10 }}>QCM · NIVEAU INTERMÉDIAIRE</p>
+                    <h3 style={{ color: 'white', fontWeight: 700, fontSize: 15, marginBottom: 18, lineHeight: 1.5 }}>Quel facteur n'influence pas la vitesse de réaction ?</h3>
+                    {[{ t: 'La température', c: false }, { t: 'La couleur du récipient', c: true }, { t: 'La concentration des réactifs', c: false }, { t: 'La présence d\'un catalyseur', c: false }].map((opt, i) => (
+                      <div key={i} style={{
+                        padding: '12px 16px', borderRadius: 10, marginBottom: 8, fontSize: 13,
+                        background: opt.c ? 'rgba(56,189,248,0.1)' : 'rgba(255,255,255,0.03)',
+                        border: opt.c ? '1px solid rgba(56,189,248,0.35)' : '1px solid rgba(255,255,255,0.06)',
+                        color: opt.c ? '#7dd3fc' : 'rgba(255,255,255,0.55)'
+                      }}>
+                        {['A', 'B', 'C', 'D'][i]}. {opt.t} {opt.c && '✓'}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {activeTab === 'planning' && (
+                  <div>
+                    <p style={{ color: '#38bdf8', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', marginBottom: 16 }}>PLANNING DE LA SEMAINE</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {[
+                        { jour: 'Lundi', tache: 'Révision cours · Cinétique', done: true },
+                        { jour: 'Mardi', tache: 'Exercices · Cinétique', done: true },
+                        { jour: 'Mercredi', tache: 'Révision cours · Thermo', done: false },
+                        { jour: 'Jeudi', tache: 'Exercices · Thermo', done: false },
+                      ].map(item => (
+                        <div key={item.jour} style={{ display: 'flex', alignItems: 'center', gap: 14, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '11px 16px' }}>
+                          <div style={{ width: 76, color: '#38bdf8', fontSize: 12, fontWeight: 700 }}>{item.jour}</div>
+                          <div style={{ flex: 1, color: 'rgba(255,255,255,0.55)', fontSize: 13 }}>{item.tache}</div>
+                          <span style={{ color: item.done ? '#7dd3fc' : 'rgba(255,255,255,0.2)', fontSize: 14 }}>{item.done ? '✓' : '○'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {activeTab === 'controle' && (
+                  <div>
+                    <p style={{ color: '#38bdf8', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', marginBottom: 10 }}>SUJET TYPE BAC · 2H</p>
+                    <h3 style={{ color: 'white', fontWeight: 800, fontSize: 17, marginBottom: 16 }}>Bac Blanc — Physique-Chimie</h3>
+                    {[
+                      { num: 1, titre: 'Cinétique chimique', pts: 7 },
+                      { num: 2, titre: 'Équilibres acido-basiques', pts: 7 },
+                      { num: 3, titre: 'Synthèse', pts: 6 },
+                    ].map(ex => (
+                      <div key={ex.num} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '13px 16px', marginBottom: 8 }}>
+                        <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13 }}>Exercice {ex.num} — {ex.titre}</p>
+                        <span style={{ color: '#7dd3fc', fontSize: 11, fontWeight: 700 }}>{ex.pts} pts</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </AnimatedSection>
+        </div>
+      </div>
+
+      <div className="divider" />
+
+      {/* Fonctionnalités */}
+      <div id="fonctionnalités" style={{ position: 'relative', zIndex: 2, padding: '100px 40px 100px' }}>
+        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
+          <AnimatedSection>
+            <p className="eyebrow" style={{ textAlign: 'center', marginBottom: 18 }}>LES OUTILS</p>
+            <h2 style={{ fontSize: 38, fontWeight: 800, color: 'white', textAlign: 'center', marginBottom: 12, letterSpacing: '-1px' }}>
+              Tout ce dont tu as besoin.
+            </h2>
+            <p style={{ color: 'rgba(255,255,255,0.45)', textAlign: 'center', fontSize: 16, marginBottom: 56 }}>
+              Un seul outil. Toute ta physique-chimie.
+            </p>
+          </AnimatedSection>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, overflow: 'hidden' }}>
+            {[
+              { title: 'Import multi-format', desc: 'Texte, photo ou PDF — l\'IA extrait et structure automatiquement.' },
+              { title: 'Exercices adaptatifs', desc: 'Format officiel, calibrés à ton niveau exact.' },
+              { title: 'Correction intelligente', desc: 'Commentaire personnalisé sur chaque réponse ouverte.' },
+              { title: 'Contrôle blanc', desc: 'Un sujet complet, avec correction détaillée.' },
+              { title: 'Analyse de copie', desc: 'Photographie ta copie corrigée pour des pistes ciblées.' },
+              { title: 'Révision avant DS', desc: 'Un plan jour par jour, généré selon le temps restant.' },
+              { title: 'Mémoire des erreurs', desc: 'Tes erreurs passées refont surface au bon moment.' },
+              { title: 'Suivi de progression', desc: 'Tes forces et lacunes, chapitre par chapitre.' },
+              { title: 'Séries et badges', desc: 'Reste motivé avec un suivi de régularité.' },
+            ].map((f, idx) => (
+              <AnimatedSection key={f.title} delay={idx * 0.03}>
+                <div className="card-hover" style={{ background: '#070b18', padding: 26, height: '100%' }}>
+                  <h3 style={{ color: 'white', fontWeight: 700, fontSize: 15, marginBottom: 8 }}>{f.title}</h3>
+                  <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, lineHeight: 1.7 }}>{f.desc}</p>
+                </div>
+              </AnimatedSection>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="divider" />
+
+      {/* Fondateur — placeholder */}
+      <div style={{ position: 'relative', zIndex: 2, padding: '100px 40px 100px' }}>
+        <div style={{ maxWidth: 700, margin: '0 auto' }}>
+          <AnimatedSection>
+            <div className="card" style={{ borderRadius: 16, padding: 40 }}>
+              <p className="eyebrow" style={{ marginBottom: 18 }}>LE FONDATEUR</p>
+              <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start', marginBottom: 20 }}>
+                <div style={{
+                  width: 56, height: 56, borderRadius: '50%', flexShrink: 0,
+                  border: '1px dashed rgba(255,255,255,0.25)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: 'rgba(255,255,255,0.3)', fontSize: 11, fontWeight: 700, textAlign: 'center'
+                }}>
+                  Photo
+                </div>
+                <div>
+                  <p style={{ color: 'white', fontWeight: 700, fontSize: 16, marginBottom: 2 }}>Louis, fondateur de Novalys</p>
+                  <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12 }}>Élève en classe préparatoire</p>
+                </div>
+              </div>
+              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 15, lineHeight: 1.8, fontStyle: 'italic' }}>
+                « Texte à venir : pourquoi j'ai créé Novalys, mon parcours, et ce que je veux t'apporter. »
+              </p>
+              <div style={{ marginTop: 20, display: 'inline-flex', alignItems: 'center', gap: 8, border: '1px dashed rgba(255,255,255,0.2)', borderRadius: 100, padding: '6px 14px' }}>
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontWeight: 600 }}>Vidéo à venir</span>
+              </div>
+            </div>
+          </AnimatedSection>
+        </div>
+      </div>
+
+      <div className="divider" />
+
+      {/* Comparatif prof particulier */}
+      <div style={{ position: 'relative', zIndex: 2, padding: '100px 40px 40px' }}>
+        <div style={{ maxWidth: 800, margin: '0 auto' }}>
+          <AnimatedSection>
+            <div className="card" style={{ borderRadius: 16, padding: 36, textAlign: 'center' }}>
+              <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12, fontWeight: 600, marginBottom: 8, letterSpacing: '0.06em' }}>À TITRE DE COMPARAISON</p>
+              <h3 style={{ color: 'white', fontWeight: 800, fontSize: 24, marginBottom: 28 }}>
+                18 fois moins cher qu'un prof particulier.
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, maxWidth: 460, margin: '0 auto' }}>
+                <div style={{ border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 20 }}>
+                  <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12, marginBottom: 8 }}>Prof particulier</p>
+                  <p style={{ color: 'rgba(255,255,255,0.55)', fontWeight: 700, fontSize: 22 }}>~160€/mois</p>
+                </div>
+                <div style={{ border: '1px solid rgba(56,189,248,0.3)', borderRadius: 12, padding: 20 }}>
+                  <p style={{ color: '#7dd3fc', fontSize: 12, marginBottom: 8 }}>Novalys Premium</p>
+                  <p style={{ color: 'white', fontWeight: 800, fontSize: 22 }}>9€/mois</p>
+                </div>
+              </div>
+            </div>
+          </AnimatedSection>
+        </div>
+      </div>
+
+      <div className="divider" />
+
+      {/* Tarifs */}
+      <div id="tarifs" style={{ position: 'relative', zIndex: 2, padding: '100px 40px 100px' }}>
+        <div style={{ maxWidth: 860, margin: '0 auto' }}>
+          <AnimatedSection>
+            <p className="eyebrow" style={{ textAlign: 'center', marginBottom: 18 }}>LES TARIFS</p>
+            <h2 style={{ fontSize: 38, fontWeight: 800, color: 'white', textAlign: 'center', marginBottom: 12, letterSpacing: '-1px' }}>
+              Simple et transparent.
+            </h2>
+            <p style={{ color: 'rgba(255,255,255,0.45)', textAlign: 'center', fontSize: 16, marginBottom: 56 }}>
+              Commence gratuitement. Passe Premium quand tu es prêt.
+            </p>
+          </AnimatedSection>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+            <AnimatedSection delay={0}>
+              <div className="card" style={{ borderRadius: 16, padding: 32, height: '100%' }}>
+                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, fontWeight: 600, marginBottom: 8 }}>GRATUIT</p>
+                <p style={{ color: 'white', fontWeight: 800, fontSize: 42, marginBottom: 4 }}>0€</p>
+                <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13, marginBottom: 28 }}>Pour toujours</p>
+                {['Import de cours (texte)', 'Fiches de révision par IA', 'Suivi de progression', 'Dashboard personnalisé'].map(f => (
+                  <div key={f} style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 12 }}>
+                    <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13 }}>—</span>
+                    <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13 }}>{f}</span>
+                  </div>
+                ))}
+                <Link href="/inscription" className="btn-secondary" style={{ display: 'block', textAlign: 'center', fontWeight: 700, fontSize: 14, padding: '13px', borderRadius: 10, textDecoration: 'none', marginTop: 28 }}>
                   Commencer gratuitement
                 </Link>
               </div>
             </AnimatedSection>
             <AnimatedSection delay={0.1}>
-              <div style={{ borderRadius: 24, padding: 36, height: '100%', position: 'relative', overflow: 'hidden', background: 'linear-gradient(135deg, rgba(99,102,241,0.3), rgba(139,92,246,0.2))', border: '1px solid rgba(99,102,241,0.5)', boxShadow: '0 0 60px rgba(99,102,241,0.2)' }}>
-                <div style={{ position: 'absolute', top: 16, right: 16, background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', borderRadius: 100, padding: '4px 12px', color: 'white', fontSize: 11, fontWeight: 700 }}>LE PLUS POPULAIRE</div>
-                <p style={{ color: '#a5b4fc', fontSize: 13, fontWeight: 600, marginBottom: 8 }}>PREMIUM</p>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 4 }}>
-                  <p style={{ color: 'white', fontWeight: 900, fontSize: 48 }}>9€</p>
-                  <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 15 }}>/mois</p>
+              <div style={{ borderRadius: 16, padding: 32, height: '100%', border: '1px solid rgba(56,189,248,0.4)', background: 'rgba(56,189,248,0.04)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                  <p style={{ color: '#7dd3fc', fontSize: 12, fontWeight: 600 }}>PREMIUM</p>
+                  <span style={{ background: '#38bdf8', color: '#070b18', borderRadius: 100, padding: '3px 10px', fontSize: 10, fontWeight: 800 }}>POPULAIRE</span>
                 </div>
-                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, marginBottom: 32 }}>Résiliable à tout moment</p>
-                {['Tout le gratuit, plus :', 'Génération IA de fiches complètes', 'Exercices adaptatifs illimités', 'Import par photo (OCR)', 'Planning hebdomadaire IA', 'Notifications intelligentes', 'Impression optimisée des fiches', 'Analyse de tes copies de DS'].map((f, i) => (
-                  <div key={f} style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 14 }}>
-                    <span style={{ color: i === 0 ? 'transparent' : '#818cf8', fontSize: 16 }}>{i === 0 ? '' : '✓'}</span>
-                    <span style={{ color: i === 0 ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.75)', fontSize: 14, fontWeight: i === 0 ? 500 : 400, fontStyle: i === 0 ? 'italic' : 'normal' }}>{f}</span>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 4 }}>
+                  <p style={{ color: 'white', fontWeight: 800, fontSize: 42 }}>9€</p>
+                  <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>/mois</p>
+                </div>
+                <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13, marginBottom: 28 }}>Résiliable à tout moment</p>
+                {['Tout le gratuit, plus :', 'Exercices adaptatifs illimités', 'Import photo & PDF (OCR)', 'Correction IA des réponses', 'Contrôle blanc & révision DS', 'Analyse de copies corrigées', 'Mémoire des erreurs'].map((f, i) => (
+                  <div key={f} style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 12 }}>
+                    <span style={{ color: i === 0 ? 'transparent' : '#38bdf8', fontSize: 13 }}>{i === 0 ? '' : '—'}</span>
+                    <span style={{ color: i === 0 ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.75)', fontSize: 13, fontStyle: i === 0 ? 'italic' : 'normal' }}>{f}</span>
                   </div>
                 ))}
-                <Link href="/inscription" className="glow-btn" style={{ display: 'block', textAlign: 'center', color: 'white', fontWeight: 700, fontSize: 15, padding: '14px', borderRadius: 12, textDecoration: 'none', marginTop: 32 }}>
-                  Essayer Premium gratuitement →
+                <Link href="/inscription" className="btn-primary" style={{ display: 'block', textAlign: 'center', fontWeight: 700, fontSize: 14, padding: '13px', borderRadius: 10, textDecoration: 'none', marginTop: 28 }}>
+                  Essayer Premium
                 </Link>
               </div>
             </AnimatedSection>
@@ -288,38 +840,43 @@ export default function Home() {
         </div>
       </div>
 
+      <div className="divider" />
+
       {/* FAQ */}
-      <div id="faq" style={{ position: 'relative', zIndex: 2, padding: '80px 40px' }}>
-        <div style={{ maxWidth: 700, margin: '0 auto' }}>
+      <div id="faq" style={{ position: 'relative', zIndex: 2, padding: '100px 40px 100px' }}>
+        <div style={{ maxWidth: 680, margin: '0 auto' }}>
           <AnimatedSection>
-            <h2 style={{ fontSize: 48, fontWeight: 900, color: 'white', textAlign: 'center', marginBottom: 60, letterSpacing: '-1px' }}>Questions fréquentes</h2>
+            <p className="eyebrow" style={{ textAlign: 'center', marginBottom: 18 }}>QUESTIONS</p>
+            <h2 style={{ fontSize: 38, fontWeight: 800, color: 'white', textAlign: 'center', marginBottom: 56, letterSpacing: '-1px' }}>
+              Questions fréquentes.
+            </h2>
           </AnimatedSection>
           <FAQSection />
         </div>
       </div>
 
       {/* CTA final */}
-      <div style={{ position: 'relative', zIndex: 2, padding: '80px 40px', textAlign: 'center' }}>
+      <div style={{ position: 'relative', zIndex: 2, padding: '40px 40px 100px', textAlign: 'center' }}>
         <AnimatedSection>
-          <div className="glass" style={{ maxWidth: 700, margin: '0 auto', borderRadius: 32, padding: '60px 40px' }}>
-            <h2 style={{ fontSize: 52, fontWeight: 900, color: 'white', marginBottom: 16, letterSpacing: '-1px' }}>
+          <div className="card" style={{ maxWidth: 680, margin: '0 auto', borderRadius: 20, padding: '56px 40px' }}>
+            <h2 style={{ fontSize: 42, fontWeight: 800, color: 'white', marginBottom: 16, letterSpacing: '-1px' }}>
               Prêt à <span className="shimmer">progresser</span> ?
             </h2>
-            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 18, marginBottom: 40 }}>Rejoins les élèves qui révisent intelligemment.</p>
-            <Link href="/inscription" className="glow-btn" style={{ display: 'inline-block', color: 'white', fontWeight: 700, fontSize: 18, padding: '18px 48px', borderRadius: 16, textDecoration: 'none' }}>
-              Créer mon compte gratuitement →
-            </Link>
+            <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 16, marginBottom: 36 }}>Rejoins les élèves qui révisent intelligemment.</p>
+            <MagneticLink href="/inscription" className="btn-primary" style={{ fontWeight: 700, fontSize: 16, padding: '16px 40px', borderRadius: 12, textDecoration: 'none' }}>
+              Créer mon compte gratuitement
+            </MagneticLink>
           </div>
         </AnimatedSection>
       </div>
 
       {/* Footer */}
-      <div style={{ position: 'relative', zIndex: 2, padding: '40px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: 13 }}>© 2026 CoachPC · Fait avec ❤️ pour les lycéens français</p>
+      <div style={{ position: 'relative', zIndex: 2, padding: '36px 40px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: 13 }}>© 2026 Novalys</p>
         <div style={{ display: 'flex', gap: 24 }}>
           <Link href="/contact" style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, textDecoration: 'none' }}>Contact</Link>
-          <Link href="/inscription" style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, textDecoration: 'none' }}>S'inscrire</Link>
           <Link href="/mentions-legales" style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, textDecoration: 'none' }}>Mentions légales</Link>
+          <Link href="/inscription" style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, textDecoration: 'none' }}>S'inscrire</Link>
         </div>
       </div>
     </div>
@@ -329,25 +886,25 @@ export default function Home() {
 function FAQSection() {
   const [open, setOpen] = useState<number | null>(null)
   const faqs = [
-    { q: "Comment fonctionne la génération de fiches ?", r: "Tu importes ton cours en le collant dans l'application. L'IA analyse le contenu et génère automatiquement une fiche structurée avec les notions clés, formules et résumés. Disponible en version Premium." },
-    { q: "Les exercices sont-ils vraiment adaptés au bac ?", r: "Oui — les exercices sont générés en tenant compte du format officiel du bac de physique-chimie, avec des questions de cours, des applications numériques et des exercices type DS." },
-    { q: "Puis-je importer des cours par photo ?", r: "La fonctionnalité d'import par photo est disponible en version Premium. Pour l'instant, tu peux coller le texte de ton cours directement dans l'application." },
-    { q: "Mes données sont-elles sécurisées ?", r: "Oui. Tes cours et résultats sont stockés de façon sécurisée et ne sont accessibles que par toi. Nous utilisons Supabase, une infrastructure de niveau professionnel chiffrée." },
-    { q: "Comment fonctionne le planning hebdomadaire ?", r: "Chaque semaine, l'application calcule un planning personnalisé selon ton temps disponible, tes chapitres restants et tes objectifs." },
-    { q: "Est-ce que je peux annuler à tout moment ?", r: "Oui, sans engagement. Tu peux résilier ton abonnement Premium à tout moment depuis ton profil." },
+    { q: "Novalys fonctionne pour quels niveaux ?", r: "Novalys est disponible pour la Seconde, la Première et la Terminale, avec des fiches et exercices adaptés au programme exact de chaque classe." },
+    { q: "Comment fonctionne la génération de fiches ?", r: "Tu importes ton cours (texte, photo ou PDF), l'IA analyse le contenu et génère automatiquement une fiche structurée." },
+    { q: "Les exercices sont-ils vraiment adaptés à mon niveau ?", r: "Oui — les exercices sont générés en tenant compte du programme officiel de ta classe et du niveau de difficulté que tu choisis." },
+    { q: "Mes données sont-elles sécurisées ?", r: "Oui. Tes cours et résultats sont stockés de façon sécurisée et chiffrée. Seul toi y as accès." },
+    { q: "Comment fonctionne la révision avant un contrôle ?", r: "Indique la date de ton contrôle et le chapitre concerné, Novalys génère un plan de révision jour par jour." },
+    { q: "Est-ce que je peux annuler à tout moment ?", r: "Oui, sans engagement, directement depuis ton profil." },
   ]
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {faqs.map((faq, i) => (
-        <AnimatedSection key={i} delay={i * 0.05}>
-          <div className="glass card-hover" style={{ borderRadius: 16, overflow: 'hidden', cursor: 'pointer' }} onClick={() => setOpen(open === i ? null : i)}>
-            <div style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: 'white', fontWeight: 600, fontSize: 15 }}>{faq.q}</span>
-              <span style={{ color: '#818cf8', fontSize: 20, marginLeft: 16, flexShrink: 0, transform: open === i ? 'rotate(45deg)' : 'rotate(0)', transition: 'transform 0.3s' }}>+</span>
+        <AnimatedSection key={i} delay={i * 0.04}>
+          <div className="card card-hover" style={{ borderRadius: 12, overflow: 'hidden', cursor: 'pointer' }} onClick={() => setOpen(open === i ? null : i)}>
+            <div style={{ padding: '18px 22px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: 'white', fontWeight: 600, fontSize: 14 }}>{faq.q}</span>
+              <span style={{ color: '#38bdf8', fontSize: 18, marginLeft: 16, flexShrink: 0, transform: open === i ? 'rotate(45deg)' : 'rotate(0)', transition: 'transform 0.3s' }}>+</span>
             </div>
             {open === i && (
-              <div style={{ padding: '0 24px 20px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 14, lineHeight: 1.8, paddingTop: 16 }}>{faq.r}</p>
+              <div style={{ padding: '0 22px 18px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, lineHeight: 1.8, paddingTop: 14 }}>{faq.r}</p>
               </div>
             )}
           </div>

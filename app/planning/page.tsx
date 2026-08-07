@@ -16,18 +16,26 @@ const chapitres = [
   'Structure de la matière', 'Réactions nucléaires', 'Chimie organique',
   'Spectroscopie', 'Électromagnétisme'
 ]
-
 function genererPlanning(tempsSemaine: number, cours: any[]) {
   const heuresParJour = Math.round((tempsSemaine / 5) * 10) / 10
-  const chapitresARevoir = cours.length > 0 ? cours.map(c => c.chapitre) : chapitres.slice(0, 3)
+  const nbChapitres = cours.length
+
+  if (nbChapitres === 0) {
+    return jours.map(jour => ({ jour, repos: true, seances: [] }))
+  }
+
+  // Si peu de chapitres, on ne remplit que quelques jours, pas toute la semaine
+  const joursActifs = Math.min(nbChapitres * 2, 5)
+  const chapitresARevoir = cours.map(c => c.chapitre)
+
   return jours.map((jour, i) => {
-    if (i >= 5) return { jour, repos: true, seances: [] }
-    const chapitre = chapitresARevoir[i % chapitresARevoir.length]
+    if (i >= joursActifs) return { jour, repos: true, seances: [] }
+    const chapitre = chapitresARevoir[Math.floor(i / 2) % chapitresARevoir.length]
+    const typeSession = i % 2 === 0 ? 'Révision cours' : 'Exercices'
     return {
       jour, repos: false,
       seances: [
-        { type: 'Révision cours', duree: Math.round(heuresParJour * 0.4 * 60), chapitre },
-        { type: 'Exercices', duree: Math.round(heuresParJour * 0.6 * 60), chapitre },
+        { type: typeSession, duree: Math.round(heuresParJour * 60), chapitre }
       ]
     }
   })
@@ -52,7 +60,7 @@ export default function Planning() {
   }, [])
 
   return (
-    <div style={{ minHeight: '100vh', background: '#060d2e' }}>
+    <div style={{ minHeight: '100vh', background: '#070b18' }}>
       <style>{`
         .noise { position: fixed; top:-50%; left:-50%; width:200%; height:200%; opacity:0.03; pointer-events:none; z-index:0;
           background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E"); }
@@ -115,7 +123,7 @@ export default function Planning() {
                       background: i === 0 ? 'rgba(59,130,246,0.1)' : 'rgba(139,92,246,0.1)',
                       border: `1px solid ${i === 0 ? 'rgba(59,130,246,0.25)' : 'rgba(139,92,246,0.25)'}`
                     }}>
-                      <p style={{ color: i === 0 ? '#60a5fa' : '#a78bfa', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>{seance.type.toUpperCase()}</p>
+                      <p style={{ color: i === 0 ? '#60a5fa' : '#7dd3fc', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>{seance.type.toUpperCase()}</p>
                       <p style={{ color: 'white', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>{seance.chapitre}</p>
                       <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11 }}>⏱ {seance.duree} min</p>
                     </div>

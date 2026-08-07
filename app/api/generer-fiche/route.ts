@@ -7,7 +7,7 @@ const client = new Anthropic({
 
 export async function POST(req: NextRequest) {
   try {
-    const { chapitre, contenu } = await req.json()
+    const { chapitre, contenu, niveauScolaire } = await req.json()
 
     if (!chapitre || !contenu) {
       return NextResponse.json({ error: 'Chapitre et contenu requis' }, { status: 400 })
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
       messages: [
         {
           role: 'user',
-          content: `Tu es un professeur expert en physique-chimie pour le bac français. 
+          content: `Tu es un professeur expert en physique-chimie pour le lycée français, niveau ${niveauScolaire || 'Terminale'}.
           
 À partir du cours suivant sur le chapitre "${chapitre}", génère une fiche de révision structurée et complète.
 
@@ -29,6 +29,7 @@ La fiche doit contenir exactement ces sections en français :
 3. 🔍 DÉFINITIONS (les termes importants à connaître)
 4. ⚠️ POINTS D'ATTENTION (les erreurs fréquentes et pièges à éviter)
 5. 💡 MÉTHODE (comment aborder les exercices de ce chapitre)
+IMPORTANT — Pour toutes les formules chimiques et physiques, utilise UNIQUEMENT du texte brut simple, sans LaTeX ni symboles Unicode complexes. Écris par exemple "H2O" et non "H_2O" ou "H₂O", "v = d/t" et non des fractions LaTeX, "->" pour une flèche de réaction plutôt que "→". Les indices et exposants doivent être écrits normalement en ligne (ex: "CO2" pas "CO₂").
 
 Cours à analyser :
 ${contenu}

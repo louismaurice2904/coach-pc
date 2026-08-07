@@ -22,3 +22,47 @@ body {
   color: var(--text);
   font-family: 'Geist', sans-serif;
 }
+:root {
+  --bg-main: #070b18;
+  --accent: #38bdf8;
+  --accent-soft: #7dd3fc;
+  --accent-glow: rgba(56, 189, 248, 0.4);
+}
+
+.page-bg {
+  background: var(--bg-main);
+  min-height: 100vh;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.card-hover {
+  transition: border-color 0.25s ease, transform 0.25s ease;
+}
+.card-hover:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.btn-primary {
+  background: #fff;
+  color: var(--bg-main);
+  transition: opacity 0.2s ease;
+}
+.btn-primary:hover {
+  opacity: 0.85;
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: rgba(255, 255, 255, 0.85);
+  transition: all 0.2s ease;
+}
+.btn-secondary:hover {
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.03);
+}

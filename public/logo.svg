@@ -12,8 +12,8 @@
   <circle cx="20" cy="20" r="4" fill="url(#g)"/>
   <circle cx="20" cy="5" r="2" fill="#60a5fa"/>
   <circle cx="33" cy="27" r="2" fill="#8b5cf6"/>
-  <circle cx="7" cy="27" r="2" fill="#a78bfa"/>
+  <circle cx="7" cy="27" r="2" fill="#7dd3fc"/>
   <!-- Texte -->
-  <text x="44" y="26" font-family="Inter, sans-serif" font-weight="900" font-size="20" fill="white" letter-spacing="-0.5">Coach</text>
-  <text x="112" y="26" font-family="Inter, sans-serif" font-weight="900" font-size="20" fill="url(#g)" letter-spacing="-0.5">PC</text>
+  <text x="44" y="26" font-family="Inter, sans-serif" font-weight="900" font-size="18" fill="white" letter-spacing="-0.5">Nova</text>
+  <text x="98" y="26" font-family="Inter, sans-serif" font-weight="900" font-size="18" fill="url(#g)" letter-spacing="-0.5">lys</text>
 </svg>

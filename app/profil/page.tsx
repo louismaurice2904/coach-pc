@@ -50,7 +50,7 @@ export default function Profil() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#060d2e' }}>
+    <div style={{ minHeight: '100vh', background: '#070b18' }}>
       <style>{`
         .noise { position: fixed; top:-50%; left:-50%; width:200%; height:200%; opacity:0.03; pointer-events:none; z-index:0;
           background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E"); }
@@ -87,7 +87,7 @@ export default function Profil() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
             {[
               { label: 'Prénom', comp: <input type="text" placeholder="Ton prénom" value={prenom} onChange={e => setPrenom(e.target.value)} /> },
-              { label: 'Classe', comp: <select value={classe} onChange={e => setClasse(e.target.value)}><option value="">Choisir...</option><option value="Première">Première</option><option value="Terminale">Terminale</option></select> },
+              { label: 'Classe', comp: <select value={classe} onChange={e => setClasse(e.target.value)}><option value="">Choisir...</option><option value="Seconde">Seconde</option><option value="Première">Première</option><option value="Terminale">Terminale</option></select> },
               { label: 'Note visée au bac (sur 20)', comp: <input type="number" min="0" max="20" placeholder="Ex : 16" value={objectif} onChange={e => setObjectif(e.target.value)} /> },
               { label: 'Temps de travail par semaine (heures)', comp: <input type="number" min="1" placeholder="Ex : 5" value={temps} onChange={e => setTemps(e.target.value)} /> },
               { label: 'Date du bac', comp: <input type="date" value={dateBac} onChange={e => setDateBac(e.target.value)} /> },

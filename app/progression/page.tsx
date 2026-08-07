@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
+import Link from 'next/link'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -17,89 +18,151 @@ const chapitresProgram = [
 
 export default function Progression() {
   const [cours, setCours] = useState<any[]>([])
+  const [progressions, setProgressions] = useState<Record<string, any>>({})
 
   useEffect(() => {
-    const fetch = async () => {
+    const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/connexion'; return }
-      const { data } = await supabase.from('cours').select('*').eq('user_id', user.id)
-      if (data) setCours(data)
+
+      const { data: c } = await supabase.from('cours').select('*').eq('user_id', user.id)
+      if (c) setCours(c)
+
+      const { data: p } = await supabase.from('progression_chapitres').select('*').eq('user_id', user.id)
+      if (p) {
+        const map: Record<string, any> = {}
+        p.forEach((item: any) => { map[item.chapitre] = item })
+        setProgressions(map)
+      }
     }
-    fetch()
+    init()
   }, [])
 
   const chapitresImportes = cours.map(c => c.chapitre)
-  const progression = Math.round((cours.length / chapitresProgram.length) * 100)
+  const totalScore = Object.values(progressions).reduce((acc: number, p: any) => acc + p.score_moyen, 0)
+  const progression = chapitresProgram.length > 0
+    ? Math.round(totalScore / (chapitresProgram.length * 100) * 100)
+    : 0
+
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return { bg: 'rgba(34,197,94,0.08)', outline: 'rgba(34,197,94,0.25)', bar: 'linear-gradient(90deg,#22c55e,#16a34a)', text: '#86efac' }
+    if (score >= 50) return { bg: 'rgba(245,158,11,0.08)', outline: 'rgba(245,158,11,0.25)', bar: 'linear-gradient(90deg,#f59e0b,#d97706)', text: '#fcd34d' }
+    return { bg: 'rgba(239,68,68,0.08)', outline: 'rgba(239,68,68,0.25)', bar: 'linear-gradient(90deg,#ef4444,#dc2626)', text: '#fca5a5' }
+  }
 
   return (
-    <div className="min-h-screen relative" style={{
-      background: 'linear-gradient(135deg, #1a237e 0%, #1565c0 50%, #42a5f5 100%)',
-    }}>
+    <div style={{ minHeight: '100vh', background: '#070b18' }}>
       <style>{`
-        .blob { position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.15; pointer-events: none; }
-        .card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
-        .card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
-        @keyframes growBar {
-          from { width: 0%; }
-          to { width: var(--target-width); }
-        }
+        .noise{position:fixed;top:-50%;left:-50%;width:200%;height:200%;opacity:0.03;pointer-events:none;z-index:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")}
+        .glass{background:rgba(255,255,255,0.025);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.08)}
+        .card-hover{transition:all 0.3s ease}
+        .card-hover:hover{transform:translateY(-2px);background:rgba(255,255,255,0.05)!important}
       `}</style>
 
-      <div className="blob" style={{ width: 400, height: 400, background: '#42a5f5', top: -100, right: -100 }} />
-      <div className="blob" style={{ width: 300, height: 300, background: '#7c4dff', bottom: 100, left: -50 }} />
+      <div className="noise" />
+      <div style={{ position: 'fixed', top: -200, right: -200, width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(56,189,248,0.08), transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
 
-      <div className="max-w-2xl mx-auto py-10 px-4 relative space-y-6">
-
-        <div>
-          <h1 className="text-2xl font-bold text-white mb-1">📈 Ma progression</h1>
-          <p className="text-blue-200 text-sm">Visualise tes chapitres maîtrisés avant le bac.</p>
-        </div>
+      <div style={{ maxWidth: 700, margin: '0 auto', padding: '40px 24px', position: 'relative', zIndex: 1 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 900, color: 'white', letterSpacing: '-0.5px', marginBottom: 6, fontFamily: 'Inter, sans-serif' }}>📈 Ma progression</h1>
+        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, marginBottom: 32, fontFamily: 'Inter, sans-serif' }}>
+          Tes scores réels basés sur tes exercices.
+        </p>
 
         {/* Score global */}
-        <div className="card rounded-2xl p-6" style={{
-          background: 'rgba(255,255,255,0.08)',
-          backdropFilter: 'blur(12px)',
-          border: '1px solid rgba(255,255,255,0.15)',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
-        }}>
-          <div className="flex justify-between items-center mb-3">
-            <h2 className="font-bold text-white">Programme couvert</h2>
-            <span className="text-2xl font-black text-blue-300">{progression}%</span>
+        <div className="glass" style={{ borderRadius: 20, padding: 24, marginBottom: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <h2 style={{ color: 'white', fontWeight: 700, fontSize: 15, fontFamily: 'Inter, sans-serif' }}>Score global</h2>
+            <span style={{ color: '#38bdf8', fontWeight: 900, fontSize: 24, fontFamily: 'Inter, sans-serif' }}>{progression}%</span>
           </div>
-          <div className="w-full rounded-full h-4" style={{ background: 'rgba(255,255,255,0.1)' }}>
-            <div className="h-4 rounded-full transition-all duration-1000" style={{
-              width: `${progression}%`,
-              background: 'linear-gradient(90deg, #42a5f5, #7c4dff)',
-              boxShadow: '0 0 12px #42a5f5'
+          <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 99, height: 10 }}>
+            <div style={{
+              width: `${progression}%`, height: 10, borderRadius: 99,
+              background: '#38bdf8',
+              transition: 'width 1s ease'
             }} />
           </div>
-          <div className="flex justify-between mt-3">
-            <p className="text-blue-200 text-xs">{cours.length} chapitres importés</p>
-            <p className="text-blue-200 text-xs">{chapitresProgram.length - cours.length} restants</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
+            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12, fontFamily: 'Inter, sans-serif' }}>
+              {Object.keys(progressions).length} chapitres travaillés
+            </p>
+            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12, fontFamily: 'Inter, sans-serif' }}>
+              {chapitresProgram.length - Object.keys(progressions).length} restants
+            </p>
           </div>
+        </div>
+
+        {/* Légende */}
+        <div style={{ display: 'flex', gap: 16, marginBottom: 20, flexWrap: 'wrap' }}>
+          {[
+            { color: '#86efac', label: '≥ 80% — Maîtrisé' },
+            { color: '#fcd34d', label: '50-79% — En progrès' },
+            { color: '#fca5a5', label: '< 50% — À revoir' },
+          ].map(l => (
+            <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ width: 10, height: 10, borderRadius: '50%', background: l.color }} />
+              <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, fontFamily: 'Inter, sans-serif' }}>{l.label}</span>
+            </div>
+          ))}
         </div>
 
         {/* Liste chapitres */}
-        <div className="space-y-3">
-          {chapitresProgram.map((chap) => {
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {chapitresProgram.map(chap => {
             const importe = chapitresImportes.includes(chap)
+            const prog = progressions[chap]
+            const score = prog?.score_moyen || 0
+            const couleurs = getScoreColor(score)
+
             return (
-              <div key={chap} className="card rounded-xl px-5 py-4 flex items-center justify-between" style={{
-                background: importe ? 'rgba(46,125,50,0.2)' : 'rgba(255,255,255,0.06)',
-                backdropFilter: 'blur(12px)',
-                border: `1px solid ${importe ? 'rgba(102,187,106,0.4)' : 'rgba(255,255,255,0.1)'}`,
+              <div key={chap} className="card-hover" style={{
+                borderRadius: 14, padding: '14px 18px',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
+                background: prog ? couleurs.bg : importe ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.02)',
+                outline: `1px solid ${prog ? couleurs.outline : importe ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)'}`,
               }}>
-                <div className="flex items-center gap-3">
-                  <span className="text-lg">{importe ? '✅' : '⭕'}</span>
-                  <span className={`text-sm font-medium ${importe ? 'text-green-200' : 'text-blue-200'}`}>{chap}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
+                  <span style={{ fontSize: 16, flexShrink: 0 }}>
+                    {prog && score >= 80 ? '✅' : prog ? '🔄' : importe ? '📚' : '⭕'}
+                  </span>
+                  <div style={{ flex: 1 }}>
+                    <p style={{
+                      color: prog ? 'rgba(255,255,255,0.9)' : importe ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.3)',
+                      fontSize: 14, fontWeight: prog ? 600 : 400, fontFamily: 'Inter, sans-serif', marginBottom: prog ? 6 : 0
+                    }}>
+                      {chap}
+                    </p>
+                    {prog && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ flex: 1, background: 'rgba(255,255,255,0.08)', borderRadius: 99, height: 4 }}>
+                          <div style={{
+                            width: `${score}%`, height: 4, borderRadius: 99,
+                            background: couleurs.bar, transition: 'width 0.8s ease'
+                          }} />
+                        </div>
+                        <span style={{ color: couleurs.text, fontSize: 12, fontWeight: 700, fontFamily: 'Inter, sans-serif', flexShrink: 0 }}>
+                          {score}%
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="w-24 rounded-full h-2" style={{ background: 'rgba(255,255,255,0.1)' }}>
-                  <div className="h-2 rounded-full transition-all duration-700" style={{
-                    width: importe ? '100%' : '0%',
-                    background: 'linear-gradient(90deg, #66bb6a, #2e7d32)',
-                    boxShadow: importe ? '0 0 8px #66bb6a' : 'none'
-                  }} />
-                </div>
+
+                {prog && (
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, fontFamily: 'Inter, sans-serif' }}>
+                      {prog.nb_sessions} session{prog.nb_sessions > 1 ? 's' : ''}
+                    </p>
+                  </div>
+                )}
+
+                {!prog && importe && (
+                  <Link href="/exercices" style={{
+                    fontSize: 12, color: '#38bdf8', textDecoration: 'none',
+                    fontWeight: 600, fontFamily: 'Inter, sans-serif', flexShrink: 0
+                  }}>
+                    Faire des exercices →
+                  </Link>
+                )}
               </div>
             )
           })}

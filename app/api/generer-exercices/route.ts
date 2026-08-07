@@ -7,7 +7,7 @@ const client = new Anthropic({
 
 export async function POST(req: NextRequest) {
   try {
-    const { chapitre, contenu, niveau } = await req.json()
+    const { chapitre, contenu, niveau, niveauScolaire } = await req.json()
 
     if (!chapitre || !contenu) {
       return NextResponse.json({ error: 'Chapitre et contenu requis' }, { status: 400 })
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
       messages: [
         {
           role: 'user',
-          content: `Tu es un professeur expert en physique-chimie pour le bac français.
+          content:`Tu es un professeur expert en physique-chimie pour le lycée français, niveau ${niveauScolaire || 'Terminale'}.
 
 À partir du cours suivant sur "${chapitre}", génère exactement 5 exercices variés de niveau ${niveau || 'intermédiaire'}.
 
@@ -68,6 +68,7 @@ Réponds UNIQUEMENT en JSON valide, sans aucun texte avant ou après, avec ce fo
 }
 
 Le champ "reponse" pour les QCM est l'index (0, 1, 2 ou 3) de la bonne réponse dans le tableau "options".
+IMPORTANT — Pour toutes les formules chimiques et physiques, utilise UNIQUEMENT du texte brut simple, sans LaTeX ni symboles Unicode complexes. Écris par exemple "H2O" et non "H_2O" ou "H₂O", "v = d/t" et non des fractions LaTeX, "->" pour une flèche de réaction plutôt que "→". Les indices et exposants doivent être écrits normalement en ligne (ex: "CO2" pas "CO₂").
 
 Cours :
 ${contenu}`

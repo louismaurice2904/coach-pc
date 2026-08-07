@@ -17,7 +17,7 @@ export default function Changelog() {
       version: 'v1.2', date: '1 juillet 2026', tag: 'Design',
       changes: [
         'Refonte complète de l\'interface — dark mode premium sur toutes les pages',
-        'Logo CoachPC avec icône atome',
+        'Logo Novalys avec icône atome',
         'Animations au scroll sur la page d\'accueil',
         'Mock-up dynamique du dashboard sur la landing',
         'Page 404 personnalisée',
@@ -36,7 +36,7 @@ export default function Changelog() {
     {
       version: 'v1.0', date: '20 juin 2026', tag: 'Lancement',
       changes: [
-        'Lancement de CoachPC 🚀',
+        'Lancement de Novalys 🚀',
         'Inscription, connexion et profil élève',
         'Import de cours par copier-coller',
         'Fiches de révision',
@@ -54,7 +54,7 @@ export default function Changelog() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#060d2e' }}>
+    <div style={{ minHeight: '100vh', background: '#070b18' }}>
       <style>{`
         .noise{position:fixed;top:-50%;left:-50%;width:200%;height:200%;opacity:0.03;pointer-events:none;z-index:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")}
         .glass{background:rgba(255,255,255,0.04);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.08)}
@@ -64,7 +64,7 @@ export default function Changelog() {
 
       <div style={{ maxWidth: 700, margin: '0 auto', padding: '40px 24px', position: 'relative', zIndex: 1 }}>
         <h1 style={{ fontSize: 28, fontWeight: 900, color: 'white', letterSpacing: '-0.5px', marginBottom: 6, fontFamily: 'Inter, sans-serif' }}>🆕 Nouveautés</h1>
-        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, marginBottom: 40, fontFamily: 'Inter, sans-serif' }}>Toutes les mises à jour de CoachPC.</p>
+        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, marginBottom: 40, fontFamily: 'Inter, sans-serif' }}>Toutes les mises à jour de Novalys.</p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           {updates.map((update, i) => (
@@ -95,7 +95,7 @@ export default function Changelog() {
                 <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {update.changes.map((change, j) => (
                     <li key={j} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                      <span style={{ color: '#818cf8', fontSize: 14, flexShrink: 0, marginTop: 1 }}>✦</span>
+                      <span style={{ color: '#38bdf8', fontSize: 14, flexShrink: 0, marginTop: 1 }}>✦</span>
                       <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: 14, lineHeight: 1.5, fontFamily: 'Inter, sans-serif' }}>{change}</span>
                     </li>
                   ))}

@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
+import { verifierLimite } from '../../lib/rateLimit'
 
 const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -7,7 +8,14 @@ const client = new Anthropic({
 
 export async function POST(req: NextRequest) {
   try {
-    const { chapitres, niveauScolaire } = await req.json()
+    const { chapitres, niveauScolaire, userId } = await req.json()
+
+    if (userId) {
+      const limite = await verifierLimite(userId, 'generer-bac-blanc')
+      if (!limite.autorise) {
+        return NextResponse.json({ error: limite.message }, { status: 429 })
+      }
+    }
 
     if (!chapitres || chapitres.length === 0) {
       return NextResponse.json({ error: 'Au moins un chapitre requis' }, { status: 400 })

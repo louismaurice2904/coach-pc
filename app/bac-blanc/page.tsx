@@ -20,11 +20,13 @@ export default function BacBlanc() {
   const [niveauScolaire, setNiveauScolaire] = useState('Terminale')
   const [isPremium, setIsPremium] = useState(false)
   const { checkAccess, PremiumModal } = usePremiumCheck(isPremium)
+  const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/connexion'; return }
+      setUserId(user.id)
       const { data: c } = await supabase.from('cours').select('*').eq('user_id', user.id)
       if (c) setCours(c)
       const { data: profil } = await supabase.from('profils').select('niveau_scolaire, premium').eq('user_id', user.id).single()
@@ -52,11 +54,11 @@ export default function BacBlanc() {
       const res = await fetch('/api/generer-bac-blanc', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chapitres: chapitresSelectionnes, niveauScolaire })
+        body: JSON.stringify({ chapitres: chapitresSelectionnes, niveauScolaire, userId })
       })
       const data = await res.json()
       if (data.error) {
-        toast('Erreur lors de la génération', 'error')
+        toast(data.error, 'error')
       } else {
         setSujet(data)
         toast('Sujet généré ✅', 'success')
@@ -76,9 +78,9 @@ export default function BacBlanc() {
       <PremiumModal />
       <style>{`
         .noise{position:fixed;top:-50%;left:-50%;width:200%;height:200%;opacity:0.03;pointer-events:none;z-index:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")}
-        .glass{background:rgba(255,255,255,0.04);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.08)}
-        .glow-btn{background:linear-gradient(135deg,#3b82f6,#8b5cf6);box-shadow:0 0 30px rgba(99,102,241,0.4);transition:all 0.3s;border:none;cursor:pointer}
-        .glow-btn:hover{box-shadow:0 0 50px rgba(99,102,241,0.7);transform:scale(1.05)}
+        .glass{background:rgba(255,255,255,0.025);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.08)}
+        .btn-primary{background:#fff;color:#070b18;transition:opacity 0.2s ease;border:none;cursor:pointer}
+        .btn-primary:hover{opacity:0.85}
         @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
         @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
         @media print{
@@ -88,7 +90,7 @@ export default function BacBlanc() {
       `}</style>
 
       <div className="noise" />
-      <div style={{ position: 'fixed', top: -200, right: -200, width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.2), transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
+      <div style={{ position: 'fixed', top: -200, right: -200, width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(56,189,248,0.08), transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
 
       <div style={{ maxWidth: 800, margin: '0 auto', padding: '40px 24px', position: 'relative', zIndex: 1 }}>
 
@@ -98,7 +100,7 @@ export default function BacBlanc() {
               📝 {titrePage}
             </h1>
             {!isPremium && (
-              <span style={{ background: 'rgba(167,139,250,0.15)', outline: '1px solid rgba(167,139,250,0.4)', color: '#c4b5fd', fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 100, fontFamily: 'Inter, sans-serif' }}>
+              <span style={{ background: 'rgba(56,189,248,0.12)', outline: '1px solid rgba(56,189,248,0.4)', color: '#7dd3fc', fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 100, fontFamily: 'Inter, sans-serif' }}>
                 👑 PREMIUM
               </span>
             )}
@@ -118,9 +120,9 @@ export default function BacBlanc() {
                 <button key={c.id} onClick={() => toggleChapitre(c.id)} style={{
                   padding: '12px 16px', borderRadius: 12, border: 'none', cursor: 'pointer',
                   textAlign: 'left', fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 500,
-                  background: selected.includes(c.id) ? 'linear-gradient(135deg, rgba(99,102,241,0.3), rgba(139,92,246,0.2))' : 'rgba(255,255,255,0.04)',
+                  background: selected.includes(c.id) ? 'rgba(56,189,248,0.1)' : 'rgba(255,255,255,0.04)',
                   color: selected.includes(c.id) ? 'white' : 'rgba(255,255,255,0.6)',
-                  outline: selected.includes(c.id) ? '1px solid rgba(99,102,241,0.5)' : '1px solid rgba(255,255,255,0.06)',
+                  outline: selected.includes(c.id) ? '1px solid rgba(56,189,248,0.5)' : '1px solid rgba(255,255,255,0.06)',
                   display: 'flex', alignItems: 'center', gap: 10
                 }}>
                   <span>{selected.includes(c.id) ? '☑️' : '⬜'}</span>
@@ -129,8 +131,8 @@ export default function BacBlanc() {
               ))}
             </div>
 
-            <button onClick={() => checkAccess(genererSujet)} disabled={loading || selected.length === 0} className="glow-btn" style={{
-              width: '100%', color: 'white', fontWeight: 700, fontSize: 15, padding: '14px',
+            <button onClick={() => checkAccess(genererSujet)} disabled={loading || selected.length === 0} className="btn-primary" style={{
+              width: '100%', fontWeight: 700, fontSize: 15, padding: '14px',
               borderRadius: 14, fontFamily: 'Inter, sans-serif',
               opacity: loading || selected.length === 0 ? 0.5 : 1
             }}>
@@ -139,7 +141,7 @@ export default function BacBlanc() {
 
             {loading && (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginTop: 16 }}>
-                <div style={{ width: 20, height: 20, borderRadius: '50%', border: '2px solid rgba(99,102,241,0.2)', borderTop: '2px solid #38bdf8', animation: 'spin 1s linear infinite' }} />
+                <div style={{ width: 20, height: 20, borderRadius: '50%', border: '2px solid rgba(56,189,248,0.2)', borderTop: '2px solid #38bdf8', animation: 'spin 1s linear infinite' }} />
                 <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, fontFamily: 'Inter, sans-serif' }}>
                   Ça peut prendre 20-30 secondes...
                 </p>
@@ -151,8 +153,8 @@ export default function BacBlanc() {
         {sujet && (
           <div style={{ animation: 'fadeIn 0.5s ease' }}>
             <div className="no-print" style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-              <button onClick={() => window.print()} className="glow-btn" style={{
-                color: 'white', fontWeight: 700, fontSize: 13, padding: '10px 20px',
+              <button onClick={() => window.print()} className="btn-primary" style={{
+                fontWeight: 700, fontSize: 13, padding: '10px 20px',
                 borderRadius: 10, fontFamily: 'Inter, sans-serif'
               }}>
                 🖨️ Imprimer le sujet
@@ -171,7 +173,7 @@ export default function BacBlanc() {
                     <h3 style={{ color: 'white', fontWeight: 700, fontSize: 17, fontFamily: 'Inter, sans-serif' }}>
                       Exercice {ex.numero} — {ex.titre}
                     </h3>
-                    <span style={{ background: 'rgba(99,102,241,0.15)', outline: '1px solid rgba(99,102,241,0.3)', color: '#7dd3fc', fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 100, fontFamily: 'Inter, sans-serif' }}>
+                    <span style={{ background: 'rgba(56,189,248,0.15)', outline: '1px solid rgba(56,189,248,0.3)', color: '#7dd3fc', fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 100, fontFamily: 'Inter, sans-serif' }}>
                       {ex.points} points
                     </span>
                   </div>

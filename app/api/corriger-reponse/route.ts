@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
+import { verifierLimite } from '../../lib/rateLimit'
 
 const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -7,7 +8,14 @@ const client = new Anthropic({
 
 export async function POST(req: NextRequest) {
   try {
-    const { question, reponse_eleve, reponse_attendue, chapitre } = await req.json()
+    const { question, reponse_eleve, reponse_attendue, chapitre, userId } = await req.json()
+
+    if (userId) {
+      const limite = await verifierLimite(userId, 'corriger-reponse')
+      if (!limite.autorise) {
+        return NextResponse.json({ error: limite.message }, { status: 429 })
+      }
+    }
 
     if (!question || !reponse_eleve) {
       return NextResponse.json({ error: 'Question et réponse requises' }, { status: 400 })

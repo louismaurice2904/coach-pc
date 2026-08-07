@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { useToast } from '../components/Toast'
-import { usePremiumCheck } from '../components/PremiumGate'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -20,19 +19,18 @@ export default function Fiche() {
   const [niveauScolaire, setNiveauScolaire] = useState('Terminale')
   const [explicationAlternative, setExplicationAlternative] = useState('')
   const [loadingExplication, setLoadingExplication] = useState(false)
-  const [isPremium, setIsPremium] = useState(false)
-  const { checkAccess, PremiumModal } = usePremiumCheck(isPremium)
+  const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/connexion'; return }
+      setUserId(user.id)
       const { data } = await supabase.from('cours').select('*').eq('user_id', user.id)
       if (data) setCours(data)
 
-      const { data: profil } = await supabase.from('profils').select('niveau_scolaire, premium').eq('user_id', user.id).single()
+      const { data: profil } = await supabase.from('profils').select('niveau_scolaire').eq('user_id', user.id).single()
       if (profil?.niveau_scolaire) setNiveauScolaire(profil.niveau_scolaire)
-      setIsPremium(profil?.premium || false)
 
       const { data: fichesData } = await supabase.from('fiches_generees').select('*').eq('user_id', user.id)
       if (fichesData) {
@@ -59,11 +57,11 @@ export default function Fiche() {
       const res = await fetch('/api/generer-fiche', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chapitre: c.chapitre, contenu: c.contenu, niveauScolaire })
+        body: JSON.stringify({ chapitre: c.chapitre, contenu: c.contenu, niveauScolaire, userId })
       })
       const data = await res.json()
       if (data.error) {
-        toast('Erreur lors de la génération', 'error')
+        toast(data.error, 'error')
       } else {
         setFiche(data.fiche)
         setFiches(prev => ({ ...prev, [c.chapitre]: data.fiche }))
@@ -93,11 +91,11 @@ export default function Fiche() {
       const res = await fetch('/api/generer-fiche', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chapitre: c.chapitre, contenu: c.contenu, niveauScolaire })
+        body: JSON.stringify({ chapitre: c.chapitre, contenu: c.contenu, niveauScolaire, userId })
       })
       const data = await res.json()
       if (data.error) {
-        toast('Erreur lors de la génération', 'error')
+        toast(data.error, 'error')
       } else {
         setFiche(data.fiche)
         setFiches(prev => ({ ...prev, [c.chapitre]: data.fiche }))
@@ -178,14 +176,13 @@ export default function Fiche() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#070b18' }}>
-      <PremiumModal />
       <style>{`
         .noise{position:fixed;top:-50%;left:-50%;width:200%;height:200%;opacity:0.03;pointer-events:none;z-index:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")}
-        .glass{background:rgba(255,255,255,0.04);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.08)}
+        .glass{background:rgba(255,255,255,0.025);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.08)}
         .card-hover{transition:all 0.3s ease;cursor:pointer}
-        .card-hover:hover{background:rgba(255,255,255,0.07)!important;border-color:rgba(99,102,241,0.4)!important}
-        .glow-btn{background:linear-gradient(135deg,#3b82f6,#8b5cf6);box-shadow:0 0 30px rgba(99,102,241,0.4);transition:all 0.3s;border:none;cursor:pointer}
-        .glow-btn:hover{box-shadow:0 0 50px rgba(99,102,241,0.7);transform:scale(1.05)}
+        .card-hover:hover{background:rgba(255,255,255,0.05)!important;border-color:rgba(56,189,248,0.4)!important}
+        .btn-primary{background:#fff;color:#070b18;transition:opacity 0.2s ease;border:none;cursor:pointer}
+        .btn-primary:hover{opacity:0.85}
         @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
         @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
@@ -201,7 +198,7 @@ export default function Fiche() {
       `}</style>
 
       <div className="noise" />
-      <div style={{ position: 'fixed', top: -200, right: -200, width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.2), transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
+      <div style={{ position: 'fixed', top: -200, right: -200, width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(56,189,248,0.08), transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
 
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '40px 24px', position: 'relative', zIndex: 1 }}>
 
@@ -221,8 +218,8 @@ export default function Fiche() {
               }}>
                 🔄 Régénérer
               </button>
-              <button onClick={() => window.print()} className="glow-btn no-print" style={{
-                color: 'white', fontWeight: 700, fontSize: 13, padding: '12px 20px', borderRadius: 12, fontFamily: 'Inter, sans-serif'
+              <button onClick={() => window.print()} className="btn-primary no-print" style={{
+                fontWeight: 700, fontSize: 13, padding: '12px 20px', borderRadius: 12, fontFamily: 'Inter, sans-serif'
               }}>
                 🖨️ Imprimer
               </button>
@@ -247,8 +244,8 @@ export default function Fiche() {
                 onClick={() => genererFiche(c)}
                 style={{
                   borderRadius: 16, padding: '14px 18px',
-                  border: selected?.id === c.id ? '1px solid rgba(99,102,241,0.6)' : '1px solid rgba(255,255,255,0.08)',
-                  background: selected?.id === c.id ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.04)',
+                  border: selected?.id === c.id ? '1px solid rgba(56,189,248,0.5)' : '1px solid rgba(255,255,255,0.08)',
+                  background: selected?.id === c.id ? 'rgba(56,189,248,0.1)' : 'rgba(255,255,255,0.04)',
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -260,7 +257,7 @@ export default function Fiche() {
                     {c.chapitre}
                   </p>
                   {fiches[c.chapitre] && (
-                    <span style={{ fontSize: 10, color: '#22c55e', fontWeight: 700, fontFamily: 'Inter, sans-serif' }}>✓ GÉNÉRÉE</span>
+                    <span style={{ fontSize: 10, color: '#86efac', fontWeight: 700, fontFamily: 'Inter, sans-serif' }}>✓ GÉNÉRÉE</span>
                   )}
                 </div>
               </div>
@@ -271,7 +268,7 @@ export default function Fiche() {
             <div className="glass" style={{ borderRadius: 20, padding: 28, minHeight: 400 }}>
               {loading ? (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 300, gap: 20 }}>
-                  <div style={{ width: 48, height: 48, borderRadius: '50%', border: '3px solid rgba(99,102,241,0.2)', borderTop: '3px solid #38bdf8', animation: 'spin 1s linear infinite' }} />
+                  <div style={{ width: 48, height: 48, borderRadius: '50%', border: '3px solid rgba(56,189,248,0.2)', borderTop: '3px solid #38bdf8', animation: 'spin 1s linear infinite' }} />
                   <div style={{ textAlign: 'center' }}>
                     <p style={{ color: 'white', fontWeight: 700, fontSize: 15, fontFamily: 'Inter, sans-serif', marginBottom: 6 }}>
                       🤖 Claude génère ta fiche...
@@ -296,7 +293,7 @@ export default function Fiche() {
 
                   <div className="no-print" style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                     {!explicationAlternative ? (
-                      <button onClick={() => checkAccess(expliquerAutrement)} disabled={loadingExplication} style={{
+                      <button onClick={expliquerAutrement} disabled={loadingExplication} style={{
                         background: 'rgba(250,204,21,0.1)', outline: '1px solid rgba(250,204,21,0.3)',
                         border: 'none', color: '#fcd34d', fontWeight: 700, fontSize: 13,
                         padding: '10px 18px', borderRadius: 10, cursor: 'pointer', fontFamily: 'Inter, sans-serif',
@@ -311,7 +308,7 @@ export default function Fiche() {
                       }}>
                         <p style={{ color: '#fcd34d', fontSize: 11, fontWeight: 700, marginBottom: 8, fontFamily: 'Inter, sans-serif' }}>💡 UNE AUTRE FAÇON DE VOIR</p>
                         <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, lineHeight: 1.7, fontFamily: 'Inter, sans-serif' }}>{explicationAlternative}</p>
-                        <button onClick={() => checkAccess(expliquerAutrement)} style={{
+                        <button onClick={expliquerAutrement} style={{
                           marginTop: 12, background: 'none', border: 'none', color: '#38bdf8',
                           fontSize: 12, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 600
                         }}>

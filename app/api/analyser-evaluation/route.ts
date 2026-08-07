@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
+import { verifierLimite } from '../../lib/rateLimit'
 
 const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -7,7 +8,14 @@ const client = new Anthropic({
 
 export async function POST(req: NextRequest) {
   try {
-    const { imageBase64, imageType, chapitre, niveauScolaire } = await req.json()
+    const { imageBase64, imageType, chapitre, niveauScolaire, userId } = await req.json()
+
+    if (userId) {
+      const limite = await verifierLimite(userId, 'analyser-evaluation')
+      if (!limite.autorise) {
+        return NextResponse.json({ error: limite.message }, { status: 429 })
+      }
+    }
 
     if (!imageBase64) {
       return NextResponse.json({ error: 'Image requise' }, { status: 400 })

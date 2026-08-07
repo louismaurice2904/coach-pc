@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import "./globals.css";
 import Nav from "./components/Nav";
 import { ToastProvider } from "./components/Toast";
+import { Analytics } from "@vercel/analytics/react";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 
@@ -22,6 +23,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <Nav />
           {children}
         </ToastProvider>
+        <Analytics />
       </body>
     </html>
   );

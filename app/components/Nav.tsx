@@ -17,6 +17,7 @@ const mainLinks = [
 ]
 
 const toolLinks = [
+  { href: '/feynman', label: '🎓 Explique-moi ça', desc: 'Teste ta compréhension en expliquant avec tes mots' },
   { href: '/flashcards', label: '🗂️ Flashcards', desc: 'Révise formules et définitions avec des cartes' },
   { href: '/fiche', label: '📋 Fiches', desc: 'Tes fiches de révision par chapitre' },
   { href: '/exercices', label: '✏️ Exercices', desc: 'Entraîne-toi avec des exercices adaptatifs' },

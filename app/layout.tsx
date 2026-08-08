@@ -4,6 +4,7 @@ import "./globals.css";
 import Nav from "./components/Nav";
 import { ToastProvider } from "./components/Toast";
 import { Analytics } from "@vercel/analytics/react";
+import ChatFlottant from "./components/ChatFlottant";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           {children}
         </ToastProvider>
         <Analytics />
+        <ChatFlottant />
       </body>
     </html>
   );

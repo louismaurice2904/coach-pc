@@ -32,6 +32,8 @@ export default function Dashboard() {
   const [faqOpen, setFaqOpen] = useState<number | null>(null)
   const [joursInactivite, setJoursInactivite] = useState(0)
   const [showAlerteInactivite, setShowAlerteInactivite] = useState(false)
+  const [debrief, setDebrief] = useState<string | null>(null)
+const [loadingDebrief, setLoadingDebrief] = useState(false)
 
   const updateStreak = useCallback(async (userId: string, coursCount: number) => {
     const today = new Date().toISOString().split('T')[0]
@@ -122,7 +124,36 @@ export default function Dashboard() {
       await updateStreak(user.id, c?.length || 0)
 
       const onboarded = localStorage.getItem('coachpc_onboarded')
-      if (!onboarded) setShowOnboarding(true)
+if (!onboarded) setShowOnboarding(true)
+
+const dateDebutSemaine = new Date()
+dateDebutSemaine.setDate(dateDebutSemaine.getDate() - dateDebutSemaine.getDay())
+const dateStr = dateDebutSemaine.toISOString().split('T')[0]
+
+const { data: debriefExistant } = await supabase
+  .from('debriefs_hebdo')
+  .select('*')
+  .eq('user_id', user.id)
+  .eq('date_debut_semaine', dateStr)
+  .single()
+
+if (debriefExistant) {
+  setDebrief(debriefExistant.contenu)
+} else {
+  setLoadingDebrief(true)
+  try {
+    const res = await fetch('/api/generer-debrief', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: user.id, prenom: p?.prenom })
+    })
+    const data = await res.json()
+    if (data.message) setDebrief(data.message)
+  } catch (e) {
+    console.error('Erreur génération debrief:', e)
+  }
+  setLoadingDebrief(false)
+}
     }
     init()
   }, [updateStreak])
@@ -336,7 +367,24 @@ export default function Dashboard() {
             })}
           </div>
         </div>
-
+{/* Debrief hebdomadaire */}
+{(debrief || loadingDebrief) && (
+  <div style={{
+    borderRadius: 20, padding: 24, marginBottom: 18,
+    background: 'linear-gradient(135deg, rgba(56,189,248,0.08), rgba(255,255,255,0.02))',
+    border: '1px solid rgba(56,189,248,0.2)'
+  }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+      <span style={{ fontSize: 20 }}>🎯</span>
+      <p style={{ color: '#7dd3fc', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em' }}>TON DEBRIEF DE LA SEMAINE</p>
+    </div>
+    {loadingDebrief ? (
+      <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13, fontStyle: 'italic' }}>Ton coach prépare ton debrief...</p>
+    ) : (
+      <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, lineHeight: 1.8 }}>{debrief}</p>
+    )}
+  </div>
+)}
         {/* Conseil */}
         {conseil && (
           <div style={{ borderRadius: 20, padding: 20, marginBottom: 18, background: 'rgba(250,204,21,0.06)', border: '1px solid rgba(250,204,21,0.2)' }}>

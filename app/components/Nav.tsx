@@ -17,6 +17,7 @@ const mainLinks = [
 ]
 
 const toolLinks = [
+  { href: '/flashcards', label: '🗂️ Flashcards', desc: 'Révise formules et définitions avec des cartes' },
   { href: '/fiche', label: '📋 Fiches', desc: 'Tes fiches de révision par chapitre' },
   { href: '/exercices', label: '✏️ Exercices', desc: 'Entraîne-toi avec des exercices adaptatifs' },
   { href: '/planning', label: '📅 Planning', desc: 'Ton planning hebdomadaire' },

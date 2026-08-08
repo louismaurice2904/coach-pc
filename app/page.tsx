@@ -287,11 +287,12 @@ export default function Home() {
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#38bdf8', display: 'inline-block', animation: 'pulseDot 2s ease-in-out infinite' }} />
               <span className="eyebrow">PHYSIQUE-CHIMIE · SECONDE À TERMINALE</span>
             </div>
-            <h1 style={{ fontSize: 62, fontWeight: 900, lineHeight: 1.05, marginBottom: 26, letterSpacing: '-2px', color: 'white' }}>
-              Comprendre. <span className="shimmer">Mémoriser.</span><br />Progresser.
+            <h1 style={{ fontSize: 60, fontWeight: 900, lineHeight: 1.08, marginBottom: 26, letterSpacing: '-2px' }}>
+              <span style={{ color: 'white' }}>Arrête de te demander</span><br />
+              <span className="shimmer">quoi réviser.</span>
             </h1>
-            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 18, lineHeight: 1.7, marginBottom: 40, maxWidth: 460 }}>
-              Novalys transforme chaque cours de physique-chimie en un plan de travail clair — fiches, exercices et suivi générés par IA, de la Seconde à la Terminale.
+            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 18, lineHeight: 1.7, marginBottom: 40, maxWidth: 480 }}>
+              Novalys importe ton cours, génère ta fiche, tes exercices et ton suivi — puis te dit, chaque jour, exactement quoi faire.
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <MagneticLink href="/inscription" className="btn-primary" style={{ fontWeight: 700, fontSize: 16, padding: '15px 30px', borderRadius: 12, textDecoration: 'none' }}>
@@ -322,7 +323,7 @@ export default function Home() {
                 <div style={{ background: '#10182c', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                   <span style={{ color: 'white', fontWeight: 700, fontSize: 13 }}>Nova<span style={{ color: '#38bdf8' }}>lys</span></span>
                   <div style={{ display: 'flex', gap: 5 }}>
-                    {['#5f5f66', '#5f5f66', '#5f5f66'].map((c, i) => <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: c }} />)}
+                    {[0, 1, 2].map(i => <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: '#5f5f66' }} />)}
                   </div>
                 </div>
                 <div style={{ padding: 20, minHeight: 320 }}>
@@ -417,11 +418,90 @@ export default function Home() {
           <AnimatedSection>
             <p className="eyebrow" style={{ marginBottom: 18 }}>LE PROBLÈME</p>
             <h2 style={{ fontSize: 34, fontWeight: 800, color: 'white', marginBottom: 22, letterSpacing: '-0.5px', lineHeight: 1.35 }}>
-              Réviser seul, sans savoir par où commencer, ni si tu progresses vraiment.
+              Ton cours ici. ChatGPT là. Un site d'exercices ailleurs.
             </h2>
             <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 16, lineHeight: 1.8 }}>
-              Tu as ton cours, tes annales, peut-être une IA générique — mais rien ne te dit précisément quoi travailler, ni si tes réponses sont vraiment justes. Résultat : des heures de révision sans réelle progression.
+              Aucun endroit ne te dit par où commencer, ni si tu progresses vraiment. Résultat : des heures de révision dispersées, sans réelle méthode.
             </p>
+          </AnimatedSection>
+        </div>
+      </div>
+
+      <div className="divider" />
+
+      {/* Zéro décision */}
+      <div style={{ position: 'relative', zIndex: 2, padding: '100px 40px 100px' }}>
+        <div style={{ maxWidth: 1000, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center' }}>
+          <AnimatedSection>
+            <p className="eyebrow" style={{ marginBottom: 18 }}>ZÉRO DÉCISION</p>
+            <h2 style={{ fontSize: 34, fontWeight: 800, color: 'white', marginBottom: 22, letterSpacing: '-0.5px', lineHeight: 1.3 }}>
+              Tu n'as rien à décider.<br />On s'en charge.
+            </h2>
+            <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 16, lineHeight: 1.8, marginBottom: 24 }}>
+              Pas de chapitre à choisir, pas de question à formuler. Novalys décide pour toi, chaque jour, ce qui mérite ton temps.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 26 }}>
+              {['Quel chapitre travailler aujourd\'hui ?', 'Quel niveau d\'exercice choisir ?', 'Suis-je vraiment en retard ?', 'Comment formuler ma question à l\'IA ?'].map(q => (
+                <div key={q} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 13 }}>✗</span>
+                  <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 14, textDecoration: 'line-through', textDecorationColor: 'rgba(255,255,255,0.15)' }}>{q}</span>
+                </div>
+              ))}
+            </div>
+            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, fontStyle: 'italic', borderLeft: '2px solid rgba(56,189,248,0.4)', paddingLeft: 14, lineHeight: 1.7 }}>
+              Une IA classique répond à une question. Novalys construit ton parcours.
+            </p>
+          </AnimatedSection>
+
+          <AnimatedSection delay={0.1}>
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <div style={{ width: 300, borderRadius: 16, overflow: 'hidden', background: '#0c1120', border: '1px solid rgba(255,255,255,0.09)', boxShadow: '0 30px 70px rgba(0,0,0,0.4)' }}>
+                <div style={{ background: '#10182c', padding: '11px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                  <span style={{ color: 'white', fontWeight: 700, fontSize: 12 }}>Nova<span style={{ color: '#38bdf8' }}>lys</span></span>
+                </div>
+                <div style={{ padding: 24 }}>
+                  <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 10, letterSpacing: '0.08em', marginBottom: 8 }}>AUJOURD'HUI</p>
+                  <p style={{ color: 'white', fontWeight: 700, fontSize: 16, marginBottom: 20 }}>Salut Emma 👋</p>
+                  <div style={{ fontSize: 30, textAlign: 'center', marginBottom: 12 }}>✏️</div>
+                  <p style={{ color: '#7dd3fc', fontSize: 10, fontWeight: 700, textAlign: 'center', letterSpacing: '0.06em', marginBottom: 8 }}>TON PROGRAMME DU JOUR</p>
+                  <p style={{ color: 'white', fontWeight: 800, fontSize: 15, textAlign: 'center', marginBottom: 20 }}>Cinétique chimique</p>
+                  <div style={{ background: 'white', color: '#070b18', textAlign: 'center', padding: '11px', borderRadius: 10, fontWeight: 700, fontSize: 13 }}>
+                    C'est parti →
+                  </div>
+                </div>
+              </div>
+            </div>
+          </AnimatedSection>
+        </div>
+      </div>
+
+      <div className="divider" />
+
+      {/* Centralisation */}
+      <div style={{ position: 'relative', zIndex: 2, padding: '100px 40px 100px' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
+          <AnimatedSection>
+            <p className="eyebrow" style={{ marginBottom: 18 }}>TOUT AU MÊME ENDROIT</p>
+            <h2 style={{ fontSize: 34, fontWeight: 800, color: 'white', marginBottom: 18, letterSpacing: '-0.5px' }}>
+              Un seul endroit. Un seul fil.
+            </h2>
+            <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 16, lineHeight: 1.8, marginBottom: 56, maxWidth: 560, margin: '0 auto 56px' }}>
+              Ce que tu apprends nourrit ce que tu révises. Ce que tu rates revient au bon moment.
+            </p>
+          </AnimatedSection>
+
+          <AnimatedSection delay={0.1}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: 0 }}>
+              {['Cours', 'Fiche', 'Exercices', 'Suivi'].map((step, i) => (
+                <div key={step} style={{ display: 'flex', alignItems: 'center' }}>
+                  <div className="card" style={{ borderRadius: 14, padding: '18px 26px', minWidth: 120 }}>
+                    <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, fontWeight: 700, marginBottom: 4 }}>{String(i + 1).padStart(2, '0')}</p>
+                    <p style={{ color: 'white', fontWeight: 700, fontSize: 15 }}>{step}</p>
+                  </div>
+                  {i < 3 && <div style={{ width: 40, height: 1, background: 'rgba(255,255,255,0.15)', margin: '0 4px' }} />}
+                </div>
+              ))}
+            </div>
           </AnimatedSection>
         </div>
       </div>
@@ -441,7 +521,7 @@ export default function Home() {
             {[
               { num: '01', titre: 'Importe ton cours.', desc: 'Colle ton cours, prends une photo, ou upload un PDF. Novalys lit et comprend le contenu instantanément.' },
               { num: '02', titre: 'Reçois ta fiche.', desc: 'Une fiche de révision claire et structurée : points clés, formules, définitions, méthode.' },
-              { num: '03', titre: "T'entraîne avec des exercices.", desc: 'Des exercices adaptés à ton niveau exact, avec correction immédiate et explications personnalisées.' },
+              { num: '03', titre: "T'entraîne avec des exercices.", desc: 'Des exercices au format officiel du bac, calibrés à ton niveau exact, avec correction immédiate.' },
               { num: '04', titre: 'Suis ta progression.', desc: 'Visualise tes points forts et lacunes, chapitre par chapitre, et sache où concentrer tes efforts.' },
             ].map((step, i) => (
               <AnimatedSection key={step.num} delay={i * 0.08}>
@@ -466,7 +546,7 @@ export default function Home() {
 
       <div className="divider" />
 
-      {/* Ce que Novalys sait de toi — remplace la comparaison ChatGPT */}
+      {/* Ce que Novalys sait de toi */}
       <div style={{ position: 'relative', zIndex: 2, padding: '100px 40px 100px' }}>
         <div style={{ maxWidth: 1000, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center' }}>
           <AnimatedSection>
@@ -704,9 +784,9 @@ export default function Home() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, overflow: 'hidden' }}>
             {[
               { title: 'Import multi-format', desc: 'Texte, photo ou PDF — l\'IA extrait et structure automatiquement.' },
-              { title: 'Exercices adaptatifs', desc: 'Format officiel, calibrés à ton niveau exact.' },
+              { title: 'Exercices adaptatifs', desc: 'Format officiel du bac, calibrés à ton niveau exact.' },
               { title: 'Correction intelligente', desc: 'Commentaire personnalisé sur chaque réponse ouverte.' },
-              { title: 'Contrôle blanc', desc: 'Un sujet complet, avec correction détaillée.' },
+              { title: 'Contrôle blanc', desc: 'Un sujet complet, format calibré, avec correction détaillée.' },
               { title: 'Analyse de copie', desc: 'Photographie ta copie corrigée pour des pistes ciblées.' },
               { title: 'Révision avant DS', desc: 'Un plan jour par jour, généré selon le temps restant.' },
               { title: 'Mémoire des erreurs', desc: 'Tes erreurs passées refont surface au bon moment.' },
@@ -859,8 +939,9 @@ export default function Home() {
       <div style={{ position: 'relative', zIndex: 2, padding: '40px 40px 100px', textAlign: 'center' }}>
         <AnimatedSection>
           <div className="card" style={{ maxWidth: 680, margin: '0 auto', borderRadius: 20, padding: '56px 40px' }}>
-            <h2 style={{ fontSize: 42, fontWeight: 800, color: 'white', marginBottom: 16, letterSpacing: '-1px' }}>
-              Prêt à <span className="shimmer">progresser</span> ?
+            <h2 style={{ fontSize: 40, fontWeight: 800, color: 'white', marginBottom: 16, letterSpacing: '-1px', lineHeight: 1.25 }}>
+              Arrête de t'organiser seul.<br />
+              <span className="shimmer">Laisse Novalys s'en charger.</span>
             </h2>
             <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 16, marginBottom: 36 }}>Rejoins les élèves qui révisent intelligemment.</p>
             <MagneticLink href="/inscription" className="btn-primary" style={{ fontWeight: 700, fontSize: 16, padding: '16px 40px', borderRadius: 12, textDecoration: 'none' }}>

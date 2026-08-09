@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
 import { verifierLimite } from '../../lib/rateLimit'
+import { verifierUtilisateur } from '../../lib/verifyAuth'
 
 const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -8,14 +9,18 @@ const client = new Anthropic({
 
 export async function POST(req: NextRequest) {
   try {
-    const { chapitres, niveau, niveauScolaire, userId } = await req.json()
+    const userId = await verifierUtilisateur(req)
 
-    if (userId) {
-      const limite = await verifierLimite(userId, 'generer-exercices')
-      if (!limite.autorise) {
-        return NextResponse.json({ error: limite.message }, { status: 429 })
-      }
+    if (!userId) {
+      return NextResponse.json({ error: 'Tu dois être connecté pour utiliser cette fonctionnalité.' }, { status: 401 })
     }
+
+    const limite = await verifierLimite(userId, 'generer-exercices')
+    if (!limite.autorise) {
+      return NextResponse.json({ error: limite.message }, { status: 429 })
+    }
+
+    const { chapitres, niveau, niveauScolaire } = await req.json()
 
     if (!chapitres || chapitres.length === 0) {
       return NextResponse.json({ error: 'Au moins un chapitre requis' }, { status: 400 })

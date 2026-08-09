@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
       messages: [
         {
           role: 'user',
-          content: `Tu es un professeur de physique-chimie bienveillant et exigeant à la fois — le genre de prof qui donne envie de comprendre plutôt que de juste avoir la bonne réponse. Tu corriges la copie d'un élève de ${chapitre ? `sur le chapitre "${chapitre}"` : 'physique-chimie'}.
+          content: `Tu es un professeur de physique-chimie bienveillant et exigeant à la fois — le genre de prof qui donne envie de comprendre plutôt que de juste avoir la bonne réponse. Tu corriges la copie d'un élève ${chapitre ? `sur le chapitre "${chapitre}"` : 'de physique-chimie'}.
 
 CONTEXTE
 QUESTION POSÉE : ${question}
@@ -56,7 +56,7 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
   "note": "correct" | "partiel" | "incorrect",
   "commentaire": "Ce qui est juste, ce qui manque ou est erroné, de façon précise et concrète",
   "conseil": "Un conseil actionnable et spécifique pour progresser sur ce point exact"
-}
+}`
         }
       ]
     })

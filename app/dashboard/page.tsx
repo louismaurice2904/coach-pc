@@ -18,8 +18,20 @@ const BADGE_LIST = [
   { id: 'programme_complet', icon: '🏆', label: 'Équilibre thermodynamique' },
 ]
 
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 820)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
+  return isMobile
+}
+
 export default function Dashboard() {
   const { toast } = useToast()
+  const isMobile = useIsMobile()
   const [profil, setProfil] = useState<any>(null)
   const [cours, setCours] = useState<any[]>([])
   const [joursRestants, setJoursRestants] = useState<number | null>(null)
@@ -184,7 +196,7 @@ export default function Dashboard() {
     <div style={{ minHeight: '100vh', background: '#070b18' }}>
       <Confetti active={confetti} onDone={() => setConfetti(false)} />
       <style>{`
-        @keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}
+        html, body { overflow-x: hidden; max-width: 100%; }
         .glass{background:rgba(255,255,255,0.025);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.08)}
         .card-hover{transition:all 0.25s ease}
         .card-hover:hover{border-color:rgba(255,255,255,0.18)!important;transform:translateY(-2px)}
@@ -200,15 +212,15 @@ export default function Dashboard() {
       <div className="noise" />
       <div style={{ position: 'fixed', top: -200, right: -200, width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(56,189,248,0.08), transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
 
-      <div style={{ maxWidth: 1080, margin: '0 auto', padding: '40px 24px', position: 'relative', zIndex: 1 }}>
+      <div style={{ maxWidth: 1080, margin: '0 auto', padding: isMobile ? '24px 16px' : '40px 24px', position: 'relative', zIndex: 1 }}>
 
         {showAlerteInactivite && (
           <div style={{
-            borderRadius: 16, padding: 18, marginBottom: 18,
+            borderRadius: 16, padding: isMobile ? 14 : 18, marginBottom: 18,
             background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)',
             animation: 'slideDown 0.4s ease', display: 'flex', alignItems: 'center', gap: 14
           }}>
-            <span style={{ fontSize: 22 }}>😴</span>
+            <span style={{ fontSize: 20 }}>😴</span>
             <div style={{ flex: 1 }}>
               <p style={{ color: '#fca5a5', fontWeight: 700, fontSize: 13, marginBottom: 2, fontFamily: 'Inter, sans-serif' }}>
                 Ça fait {joursInactivite} jours qu'on ne t'a pas vu.
@@ -217,20 +229,20 @@ export default function Dashboard() {
                 Reprends une petite session aujourd'hui pour ne pas perdre le rythme.
               </p>
             </div>
-            <button onClick={() => setShowAlerteInactivite(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', fontSize: 18 }}>×</button>
+            <button onClick={() => setShowAlerteInactivite(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', fontSize: 18, flexShrink: 0 }}>×</button>
           </div>
         )}
 
         {showOnboarding && (
-          <div style={{ borderRadius: 16, padding: 22, marginBottom: 18, border: '1px solid rgba(56,189,248,0.25)', background: 'rgba(56,189,248,0.04)' }}>
+          <div style={{ borderRadius: 16, padding: isMobile ? 16 : 22, marginBottom: 18, border: '1px solid rgba(56,189,248,0.25)', background: 'rgba(56,189,248,0.04)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <div>
                 <p style={{ color: '#7dd3fc', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', marginBottom: 4 }}>POUR COMMENCER</p>
-                <h2 style={{ color: 'white', fontWeight: 700, fontSize: 15 }}>3 étapes pour débloquer Novalys</h2>
+                <h2 style={{ color: 'white', fontWeight: 700, fontSize: 14 }}>3 étapes pour débloquer Novalys</h2>
               </div>
-              <button onClick={() => { setShowOnboarding(false); localStorage.setItem('coachpc_onboarded', '1') }} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', fontSize: 20 }}>×</button>
+              <button onClick={() => { setShowOnboarding(false); localStorage.setItem('coachpc_onboarded', '1') }} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', fontSize: 20, flexShrink: 0 }}>×</button>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 8 }}>
               {onboardingSteps.map((step, i) => (
                 <Link key={i} href={step.href} style={{
                   textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10,
@@ -256,10 +268,10 @@ export default function Dashboard() {
         )}
 
         {/* Zone héros */}
-        <div className="glass" style={{ borderRadius: 20, padding: 30, marginBottom: 18 }}>
+        <div className="glass" style={{ borderRadius: 20, padding: isMobile ? 20 : 30, marginBottom: 18 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
             <div>
-              <h1 style={{ fontSize: 26, fontWeight: 900, color: 'white', letterSpacing: '-0.5px', marginBottom: 4 }}>
+              <h1 style={{ fontSize: isMobile ? 22 : 26, fontWeight: 900, color: 'white', letterSpacing: '-0.5px', marginBottom: 4 }}>
                 Bonjour {profil?.prenom || ''}
               </h1>
               <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>
@@ -268,8 +280,8 @@ export default function Dashboard() {
             </div>
             {joursRestants !== null && (
               <div style={{ textAlign: 'right' }}>
-                <p style={{ fontSize: 26, fontWeight: 900, color: joursRestants < 30 ? '#fca5a5' : 'white', lineHeight: 1 }}>{joursRestants}</p>
-                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>jours avant le bac</p>
+                <p style={{ fontSize: 22, fontWeight: 900, color: joursRestants < 30 ? '#fca5a5' : 'white', lineHeight: 1 }}>{joursRestants}</p>
+                <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>jours avant le bac</p>
               </div>
             )}
           </div>
@@ -280,7 +292,7 @@ export default function Dashboard() {
               {loadingDebrief ? (
                 <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, fontStyle: 'italic' }}>Ton coach prépare ton debrief...</p>
               ) : (
-                <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 14, lineHeight: 1.7, maxWidth: 700 }}>{debrief}</p>
+                <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 13, lineHeight: 1.7, maxWidth: 700 }}>{debrief}</p>
               )}
             </div>
           )}
@@ -289,19 +301,19 @@ export default function Dashboard() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
               <div>
                 <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', marginBottom: 4 }}>REPRENDRE</p>
-                <p style={{ color: 'white', fontWeight: 700, fontSize: 16 }}>{dernierCours.chapitre}</p>
+                <p style={{ color: 'white', fontWeight: 700, fontSize: 15 }}>{dernierCours.chapitre}</p>
               </div>
               <Link href="/exercices" className="btn-primary" style={{
-                fontWeight: 700, fontSize: 13, padding: '12px 22px', borderRadius: 12, textDecoration: 'none'
+                fontWeight: 700, fontSize: 13, padding: '12px 20px', borderRadius: 12, textDecoration: 'none'
               }}>
                 Reprendre →
               </Link>
             </div>
           ) : (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14 }}>Commence par importer ton premier cours.</p>
+              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>Commence par importer ton premier cours.</p>
               <Link href="/cours" className="btn-primary" style={{
-                fontWeight: 700, fontSize: 13, padding: '12px 22px', borderRadius: 12, textDecoration: 'none'
+                fontWeight: 700, fontSize: 13, padding: '12px 20px', borderRadius: 12, textDecoration: 'none'
               }}>
                 Importer →
               </Link>
@@ -309,29 +321,26 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Mise en page deux colonnes */}
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 18, alignItems: 'start' }}>
+        {/* Mise en page : colonnes sur desktop, empilé sur mobile */}
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr', gap: 18, alignItems: 'start' }}>
 
-          {/* Colonne gauche */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
 
-            {/* Stats */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 10 }}>
               {[
                 { label: 'Cours', value: cours.length },
                 { label: 'Streak max', value: streakMax },
                 { label: 'Score moyen', value: `${scoreMoyen}%` },
                 { label: 'Badges', value: badges.length },
               ].map(s => (
-                <div key={s.label} className="glass card-hover" style={{ borderRadius: 16, padding: '18px 12px', textAlign: 'center' }}>
-                  <p style={{ fontSize: 22, fontWeight: 900, color: 'white', lineHeight: 1 }}>{s.value}</p>
-                  <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, marginTop: 6 }}>{s.label}</p>
+                <div key={s.label} className="glass card-hover" style={{ borderRadius: 16, padding: '16px 10px', textAlign: 'center' }}>
+                  <p style={{ fontSize: 20, fontWeight: 900, color: 'white', lineHeight: 1 }}>{s.value}</p>
+                  <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 10, marginTop: 6 }}>{s.label}</p>
                 </div>
               ))}
             </div>
 
-            {/* Régularité — discrète */}
-            <div className="glass" style={{ borderRadius: 20, padding: '20px 22px' }}>
+            <div className="glass" style={{ borderRadius: 20, padding: isMobile ? 16 : '20px 22px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                 <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, fontWeight: 600, letterSpacing: '0.04em' }}>Régularité</p>
                 <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11 }}>{streak} j.</span>
@@ -350,47 +359,45 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Progression */}
-            <div className="glass" style={{ borderRadius: 20, padding: '20px 22px' }}>
+            <div className="glass" style={{ borderRadius: 20, padding: isMobile ? 16 : '20px 22px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                 <h2 style={{ color: 'white', fontWeight: 700, fontSize: 13 }}>Progression du programme</h2>
-                <span style={{ color: '#38bdf8', fontWeight: 800, fontSize: 16 }}>{progressionGlobale}%</span>
+                <span style={{ color: '#38bdf8', fontWeight: 800, fontSize: 15 }}>{progressionGlobale}%</span>
               </div>
               <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 99, height: 6 }}>
                 <div style={{ width: `${progressionGlobale}%`, height: 6, borderRadius: 99, background: '#38bdf8', transition: 'width 1s ease' }} />
               </div>
-              <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12, marginTop: 8 }}>
+              <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, marginTop: 8 }}>
                 {cours.length} chapitre{cours.length > 1 ? 's' : ''} importé{cours.length > 1 ? 's' : ''} sur 12
               </p>
             </div>
           </div>
 
-          {/* Colonne droite */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
 
-            {/* Badges */}
-            <div className="glass" style={{ borderRadius: 20, padding: 22 }}>
+            <div className="glass" style={{ borderRadius: 20, padding: isMobile ? 16 : 22 }}>
               <h2 style={{ color: 'white', fontWeight: 700, fontSize: 13, marginBottom: 14 }}>Badges</h2>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(5, 1fr)' : 'repeat(3, 1fr)', gap: 8 }}>
                 {BADGE_LIST.map(badge => {
                   const unlocked = badges.includes(badge.id)
                   return (
                     <div key={badge.id} className={unlocked ? 'badge-unlocked' : 'badge-locked'} style={{
-                      textAlign: 'center', padding: '12px 6px', borderRadius: 12,
+                      textAlign: 'center', padding: isMobile ? '8px 4px' : '12px 6px', borderRadius: 12,
                       background: unlocked ? 'rgba(56,189,248,0.06)' : 'rgba(255,255,255,0.02)',
                       border: `1px solid ${unlocked ? 'rgba(56,189,248,0.25)' : 'rgba(255,255,255,0.05)'}`
                     }}>
-                      <div style={{ fontSize: 20, marginBottom: 4 }}>{badge.icon}</div>
-                      <p style={{ color: unlocked ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.25)', fontSize: 9, fontWeight: 600, lineHeight: 1.3 }}>{badge.label}</p>
+                      <div style={{ fontSize: isMobile ? 16 : 20, marginBottom: 4 }}>{badge.icon}</div>
+                      {!isMobile && (
+                        <p style={{ color: unlocked ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.25)', fontSize: 9, fontWeight: 600, lineHeight: 1.3 }}>{badge.label}</p>
+                      )}
                     </div>
                   )
                 })}
               </div>
             </div>
 
-            {/* Conseil */}
             {conseil && (
-              <div style={{ borderRadius: 20, padding: 20, background: 'rgba(250,204,21,0.05)', border: '1px solid rgba(250,204,21,0.15)' }}>
+              <div style={{ borderRadius: 20, padding: isMobile ? 16 : 20, background: 'rgba(250,204,21,0.05)', border: '1px solid rgba(250,204,21,0.15)' }}>
                 <p style={{ color: '#fcd34d', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', marginBottom: 10 }}>💡 CONSEIL DU JOUR</p>
                 <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, lineHeight: 1.7 }}>{conseil}</p>
               </div>

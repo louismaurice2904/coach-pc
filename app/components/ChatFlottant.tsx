@@ -125,7 +125,7 @@ export default function ChatFlottant() {
       {ouvert && (
         <div style={{
           position: 'fixed', bottom: 24, right: 24, zIndex: 999,
-          width: 360, height: 520, borderRadius: 20, overflow: 'hidden',
+          width: 'min(360px, calc(100vw - 32px))', height: 'min(520px, 70vh)', borderRadius: 20, overflow: 'hidden',
           background: '#0c1120', border: '1px solid rgba(255,255,255,0.1)',
           boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
           display: 'flex', flexDirection: 'column',

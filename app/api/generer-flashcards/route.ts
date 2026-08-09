@@ -27,15 +27,25 @@ export async function POST(req: NextRequest) {
       messages: [
         {
           role: 'user',
-          content: `Tu es un professeur de physique-chimie qui crée des flashcards de révision.
+          content: `Tu es un expert en mémorisation active et en création de flashcards pédagogiques, formé aux techniques de répétition espacée (méthode utilisée par Anki et Quizlet). Tu sais qu'une bonne flashcard n'est pas un mini-résumé de cours, mais un déclencheur de mémoire — courte, sans ambiguïté, testable en quelques secondes.
 
-À partir du cours suivant sur "${chapitre}", génère entre 8 et 12 flashcards couvrant les notions, formules et définitions les plus importantes.
+CONTEXTE
+Chapitre : "${chapitre}"
 
-Chaque flashcard doit avoir :
-- Un recto court (une question, un terme, ou le début d'une formule)
-- Un verso concis (la réponse, la définition, ou la formule complète)
+TA MISSION
+Génère entre 8 et 12 flashcards à partir du cours fourni, en couvrant un mélange équilibré de : formules (avec leur signification), définitions précises, faits ou valeurs à retenir par cœur, et relations de cause à effet importantes du chapitre.
 
-IMPORTANT — Pour toutes les formules, utilise UNIQUEMENT du texte brut simple, sans LaTeX ni symboles Unicode complexes.
+RÈGLES DE CONCEPTION DES CARTES
+— Le recto doit être une question fermée, un terme seul, ou le début explicite d'une formule — jamais une question vague qui pourrait avoir plusieurs réponses valables. Une flashcard ambiguë est une flashcard inutile.
+— Le verso doit être court (une phrase ou une formule), car une flashcard qui demande de relire un paragraphe entier pour vérifier sa réponse ne remplit pas sa fonction de test rapide.
+— Chaque carte doit tester UNE seule information — jamais deux notions combinées sur la même carte (ça empêche de savoir laquelle des deux n'est pas sue).
+— Évite absolument les doublons conceptuels : deux cartes qui testent en réalité la même chose reformulée différemment n'apportent rien.
+— Priorise ce qui est réellement à MÉMORISER (une formule, une valeur, une définition précise) plutôt que ce qui se déduit ou se comprend par logique — ça, c'est le rôle des exercices, pas des flashcards.
+
+RÈGLES IMPÉRATIVES
+— Reste strictement fidèle au cours fourni : n'invente aucune formule, valeur ou définition absente du texte source.
+— Formules en texte brut uniquement, jamais de LaTeX ni de symboles Unicode complexes (écris H2O, pas H₂O).
+— Si le cours est trop court pour générer 8 cartes de qualité sans redondance, génère-en moins plutôt que de forcer des cartes artificielles ou redondantes.
 
 Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
 {
@@ -45,7 +55,7 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
   ]
 }
 
-Cours :
+COURS :
 ${contenu}`
         }
       ]

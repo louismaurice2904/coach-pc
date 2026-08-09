@@ -13,7 +13,7 @@ const supabase = createClient(
 export default function Exercices() {
   const { toast } = useToast()
   const [cours, setCours] = useState<any[]>([])
-  const [selected, setSelected] = useState<any>(null)
+  const [selected, setSelected] = useState<number[]>([])
   const [exercices, setExercices] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [niveau, setNiveau] = useState<'facile' | 'intermédiaire' | 'difficile'>('intermédiaire')
@@ -42,8 +42,12 @@ export default function Exercices() {
     init()
   }, [])
 
+  const toggleChapitre = (id: number) => {
+    setSelected(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id])
+  }
+
   const genererExercices = async () => {
-    if (!selected) { toast('Sélectionne un chapitre', 'error'); return }
+    if (selected.length === 0) { toast('Sélectionne au moins un chapitre', 'error'); return }
     setLoading(true)
     setExercices([])
     setReponses({})
@@ -52,11 +56,13 @@ export default function Exercices() {
     setScore(0)
     setCorrections({})
 
+    const chapitresSelectionnes = cours.filter(c => selected.includes(c.id))
+
     try {
       const res = await fetch('/api/generer-exercices', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chapitre: selected.chapitre, contenu: selected.contenu, niveau, niveauScolaire, userId })
+        body: JSON.stringify({ chapitres: chapitresSelectionnes, niveau, niveauScolaire, userId })
       })
       const data = await res.json()
       if (data.error) {
@@ -87,7 +93,7 @@ export default function Exercices() {
         } else if (user) {
           await supabase.from('erreurs').insert({
             user_id: user.id,
-            chapitre: selected.chapitre,
+            chapitre: ex.chapitre || 'Non spécifié',
             question: ex.question,
             type_erreur: 'qcm',
             date_erreur: new Date().toISOString().split('T')[0],
@@ -103,32 +109,41 @@ export default function Exercices() {
 
     try {
       if (!user) return
-      const scorePct = Math.round((s / Math.max(qcmCount, 1)) * 100)
 
-      const { data: existing } = await supabase
-        .from('progression_chapitres')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('chapitre', selected.chapitre)
-        .single()
+      const chapitresConcernes = [...new Set(exercices.map((ex: any) => ex.chapitre).filter(Boolean))]
 
-      if (existing) {
-        const newMoyenne = Math.round((existing.score_moyen + scorePct) / 2)
-        await supabase.from('progression_chapitres').update({
-          score_moyen: newMoyenne,
-          nb_sessions: existing.nb_sessions + 1
-        }).eq('user_id', user.id).eq('chapitre', selected.chapitre)
-      } else {
-        await supabase.from('progression_chapitres').insert({
-          user_id: user.id,
-          chapitre: selected.chapitre,
-          score_moyen: scorePct,
-          nb_sessions: 1
-        })
+      for (const chap of chapitresConcernes) {
+        const exercicesDuChapitre = exercices.filter((ex: any) => ex.chapitre === chap && ex.type === 'qcm')
+        const bonnesReponsesChapitre = exercicesDuChapitre.filter((ex: any) => reponses[ex.id] === ex.reponse).length
+        const scorePctChapitre = exercicesDuChapitre.length > 0
+          ? Math.round((bonnesReponsesChapitre / exercicesDuChapitre.length) * 100)
+          : 0
+
+        const { data: existing } = await supabase
+          .from('progression_chapitres')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('chapitre', chap)
+          .single()
+
+        if (existing) {
+          const newMoyenne = Math.round((existing.score_moyen + scorePctChapitre) / 2)
+          await supabase.from('progression_chapitres').update({
+            score_moyen: newMoyenne,
+            nb_sessions: existing.nb_sessions + 1
+          }).eq('user_id', user.id).eq('chapitre', chap)
+        } else {
+          await supabase.from('progression_chapitres').insert({
+            user_id: user.id,
+            chapitre: chap,
+            score_moyen: scorePctChapitre,
+            nb_sessions: 1
+          })
+        }
       }
 
-      if (scorePct === 100) toast('🎉 Chapitre maîtrisé à 100% !', 'badge')
-      else if (scorePct >= 80) toast('💪 Très bon score sur ce chapitre !', 'success')
+      if (s === qcmCount) toast('🎉 Sans faute sur les QCM !', 'badge')
+      else if (s / Math.max(qcmCount, 1) >= 0.8) toast('💪 Très bon score !', 'success')
     } catch (e) {
       console.error('Erreur mise à jour progression:', e)
     }
@@ -153,7 +168,7 @@ export default function Exercices() {
           question: ex.question,
           reponse_eleve: reponsesOuvertes[ex.id],
           reponse_attendue: ex.reponse_attendue,
-          chapitre: selected?.chapitre
+          chapitre: ex.chapitre
         })
       })
       const data = await res.json()
@@ -169,6 +184,7 @@ export default function Exercices() {
 
   const niveaux = ['facile', 'intermédiaire', 'difficile'] as const
   const qcmCount = exercices.filter(e => e.type === 'qcm').length
+  const nomsChapitresSelectionnes = cours.filter(c => selected.includes(c.id)).map(c => c.chapitre).join(', ')
 
   return (
     <div style={{ minHeight: '100vh', background: '#070b18' }}>
@@ -200,25 +216,29 @@ export default function Exercices() {
           )}
         </div>
         <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, marginBottom: 32, fontFamily: 'Inter, sans-serif' }}>
-          Des exercices générés par IA à partir de tes cours, adaptés à ton niveau.
+          Des exercices générés par IA à partir de tes cours, adaptés à ton niveau. Sélectionne un ou plusieurs chapitres.
         </p>
 
         <div className="glass" style={{ borderRadius: 20, padding: 24, marginBottom: 24 }}>
           <h2 style={{ color: 'white', fontWeight: 700, fontSize: 15, marginBottom: 20, fontFamily: 'Inter, sans-serif' }}>⚙️ Configurer les exercices</h2>
 
-          <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', display: 'block', marginBottom: 10, fontFamily: 'Inter, sans-serif' }}>CHAPITRE</label>
+          <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', display: 'block', marginBottom: 10, fontFamily: 'Inter, sans-serif' }}>
+            CHAPITRES ({selected.length} sélectionné{selected.length > 1 ? 's' : ''})
+          </label>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
             {cours.length === 0 ? (
               <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, fontFamily: 'Inter, sans-serif' }}>Aucun cours importé.</p>
             ) : cours.map(c => (
-              <button key={c.id} onClick={() => { setSelected(c); setExercices([]); setValide(false); setReponses({}); setCorrections({}) }} style={{
+              <button key={c.id} onClick={() => { toggleChapitre(c.id); setExercices([]); setValide(false); setReponses({}); setCorrections({}) }} style={{
                 padding: '12px 16px', borderRadius: 12, border: 'none', cursor: 'pointer',
                 textAlign: 'left', fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 500, transition: 'all 0.2s',
-                background: selected?.id === c.id ? 'rgba(56,189,248,0.12)' : 'rgba(255,255,255,0.04)',
-                color: selected?.id === c.id ? 'white' : 'rgba(255,255,255,0.6)',
-                outline: selected?.id === c.id ? '1px solid rgba(56,189,248,0.5)' : '1px solid rgba(255,255,255,0.06)',
+                background: selected.includes(c.id) ? 'rgba(56,189,248,0.1)' : 'rgba(255,255,255,0.04)',
+                color: selected.includes(c.id) ? 'white' : 'rgba(255,255,255,0.6)',
+                outline: selected.includes(c.id) ? '1px solid rgba(56,189,248,0.5)' : '1px solid rgba(255,255,255,0.06)',
+                display: 'flex', alignItems: 'center', gap: 10
               }}>
-                {selected?.id === c.id ? '▸ ' : ''}{c.chapitre}
+                <span>{selected.includes(c.id) ? '☑️' : '⬜'}</span>
+                {c.chapitre}
               </button>
             ))}
           </div>
@@ -237,10 +257,10 @@ export default function Exercices() {
             ))}
           </div>
 
-          <button onClick={() => checkAccess(genererExercices)} disabled={loading || !selected} className="btn-primary" style={{
+          <button onClick={() => checkAccess(genererExercices)} disabled={loading || selected.length === 0} className="btn-primary" style={{
             width: '100%', fontWeight: 700, fontSize: 15,
             padding: '14px', borderRadius: 14, fontFamily: 'Inter, sans-serif',
-            opacity: loading || !selected ? 0.5 : 1
+            opacity: loading || selected.length === 0 ? 0.5 : 1
           }}>
             {loading ? '🤖 Génération en cours...' : '✨ Générer 5 exercices par IA'}
           </button>
@@ -259,7 +279,7 @@ export default function Exercices() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
               <h2 style={{ color: 'white', fontWeight: 700, fontSize: 18, fontFamily: 'Inter, sans-serif' }}>
-                {selected.chapitre} — {niveau}
+                {nomsChapitresSelectionnes} — {niveau}
               </h2>
               {valide && (
                 <button onClick={recommencer} style={{
@@ -272,7 +292,7 @@ export default function Exercices() {
 
             {exercices.map((ex, idx) => (
               <div key={ex.id} className="glass" style={{ borderRadius: 20, padding: 24, animation: `fadeIn 0.4s ease ${idx * 0.1}s both` }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
                   <span style={{
                     background: ex.type === 'qcm' ? 'rgba(56,189,248,0.15)' : ex.type === 'calcul' ? 'rgba(245,158,11,0.15)' : 'rgba(167,139,250,0.15)',
                     outline: `1px solid ${ex.type === 'qcm' ? 'rgba(56,189,248,0.4)' : ex.type === 'calcul' ? 'rgba(245,158,11,0.4)' : 'rgba(167,139,250,0.4)'}`,
@@ -281,6 +301,14 @@ export default function Exercices() {
                   }}>
                     {ex.type === 'qcm' ? 'QCM' : ex.type === 'calcul' ? 'CALCUL' : 'QUESTION OUVERTE'}
                   </span>
+                  {ex.chapitre && selected.length > 1 && (
+                    <span style={{
+                      background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.5)',
+                      fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 100, fontFamily: 'Inter, sans-serif'
+                    }}>
+                      {ex.chapitre}
+                    </span>
+                  )}
                   <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12, fontFamily: 'Inter, sans-serif' }}>Exercice {idx + 1}/{exercices.length}</span>
                 </div>
 
@@ -393,7 +421,7 @@ export default function Exercices() {
                   {score}/{qcmCount}
                 </p>
                 <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, fontFamily: 'Inter, sans-serif', marginBottom: 20 }}>
-                  {score === qcmCount ? 'Parfait ! Tu maîtrises ce chapitre.' : score >= 2 ? 'Bon travail ! Continue à réviser.' : 'Continue à réviser ce chapitre.'}
+                  {score === qcmCount ? 'Parfait ! Tu maîtrises ces chapitres.' : score >= 2 ? 'Bon travail ! Continue à réviser.' : 'Continue à réviser ces chapitres.'}
                 </p>
                 <button onClick={() => checkAccess(genererExercices)} className="btn-primary" style={{
                   fontWeight: 700, fontSize: 14, padding: '12px 28px', borderRadius: 12,

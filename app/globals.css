@@ -66,3 +66,13 @@ body {
   border-color: rgba(255, 255, 255, 0.35);
   background: rgba(255, 255, 255, 0.03);
 }
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+@media (max-width: 480px) {
+  body {
+    font-size: 14px;
+  }
+}

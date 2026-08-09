@@ -20,6 +20,14 @@ export default function Fiche() {
   const [explicationAlternative, setExplicationAlternative] = useState('')
   const [loadingExplication, setLoadingExplication] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
+  const [isMobile, setIsMobile] = useState(false)
+
+useEffect(() => {
+  const check = () => setIsMobile(window.innerWidth < 820)
+  check()
+  window.addEventListener('resize', check)
+  return () => window.removeEventListener('resize', check)
+}, [])
 
   useEffect(() => {
     const init = async () => {
@@ -227,8 +235,7 @@ export default function Fiche() {
           )}
         </div>
 
-        <div className="fiche-grid" style={{ display: 'grid', gridTemplateColumns: selected ? '280px 1fr' : '1fr', gap: 20 }}>
-
+<div className="fiche-grid" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : (selected ? '280px 1fr' : '1fr'), gap: 20 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }} className="no-print">
             {cours.length === 0 ? (
               <div className="glass" style={{ borderRadius: 20, padding: 40, textAlign: 'center' }}>

@@ -62,10 +62,14 @@ useEffect(() => {
     setFiche('')
     setLoading(true)
     try {
+      const { data: { session } } = await supabase.auth.getSession()
       const res = await fetch('/api/generer-fiche', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chapitre: c.chapitre, contenu: c.contenu, niveauScolaire, userId })
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        body: JSON.stringify({ chapitre: c.chapitre, contenu: c.contenu, niveauScolaire })
       })
       const data = await res.json()
       if (data.error) {
@@ -96,10 +100,14 @@ useEffect(() => {
     setExplicationAlternative('')
     setLoading(true)
     try {
+      const { data: { session } } = await supabase.auth.getSession()
       const res = await fetch('/api/generer-fiche', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chapitre: c.chapitre, contenu: c.contenu, niveauScolaire, userId })
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        body: JSON.stringify({ chapitre: c.chapitre, contenu: c.contenu, niveauScolaire })
       })
       const data = await res.json()
       if (data.error) {
@@ -129,10 +137,10 @@ useEffect(() => {
     if (!selected || !fiche) return
     setLoadingExplication(true)
     try {
-      const res = await fetch('/api/expliquer-autrement', {
+      const res = await fetch('/api/generer-fiche', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notion: selected.chapitre, explicationPrecedente: fiche.slice(0, 500), niveauScolaire })
+        body: JSON.stringify({ chapitre: selected.chapitre, contenu: selected.contenu, niveauScolaire, userId })
       })
       const data = await res.json()
       if (data.error) {

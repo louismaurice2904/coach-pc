@@ -10,25 +10,25 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="fr" className={`${geistSans.variable} h-full antialiased`}>
-      <script
-  type="application/ld+json"
-  dangerouslySetInnerHTML={{
-    __html: JSON.stringify({
-      '@context': 'https://schema.org',
-      '@type': 'EducationalOrganization',
-      name: 'Novalys',
-      description: 'Coach IA pour la physique-chimie au lycée, de la Seconde à la Terminale.',
-      url: 'https://coach-pc.vercel.app',
-      areaServed: 'FR',
-      audience: {
-        '@type': 'EducationalAudience',
-        educationalRole: 'student',
-      },
-    }),
-  }}
-/>
-      <body className="min-h-full flex flex-col">
+    <html lang="fr">
+      <body className={`${geistSans.variable} min-h-full flex flex-col antialiased`}>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'EducationalOrganization',
+              name: 'Novalys',
+              description: 'Coach IA pour la physique-chimie au lycée, de la Seconde à la Terminale.',
+              url: 'https://coach-pc.vercel.app',
+              areaServed: 'FR',
+              audience: {
+                '@type': 'EducationalAudience',
+                educationalRole: 'student',
+              },
+            }),
+          }}
+        />
         <ToastProvider>
           <Nav />
           {children}
@@ -65,4 +65,7 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  icons: {
+  icon: '/icon.svg',
+},
 }

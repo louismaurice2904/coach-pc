@@ -51,10 +51,14 @@ export default function BacBlanc() {
     const chapitresSelectionnes = cours.filter(c => selected.includes(c.id))
 
     try {
+      const { data: { session } } = await supabase.auth.getSession()
       const res = await fetch('/api/generer-bac-blanc', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chapitres: chapitresSelectionnes, niveauScolaire, userId })
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        body: JSON.stringify({ chapitres: chapitresSelectionnes, niveauScolaire })
       })
       const data = await res.json()
       if (data.error) {

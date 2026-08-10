@@ -157,13 +157,17 @@ export default function Exercices() {
     setCorrections({})
   }
 
-  const corrigerReponse = async (ex: any) => {
+const corrigerReponse = async (ex: any) => {
     if (!reponsesOuvertes[ex.id] || corrigeant === ex.id) return
     setCorrigeant(ex.id)
     try {
+      const { data: { session } } = await supabase.auth.getSession()
       const res = await fetch('/api/corriger-reponse', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
         body: JSON.stringify({
           question: ex.question,
           reponse_eleve: reponsesOuvertes[ex.id],
@@ -181,7 +185,6 @@ export default function Exercices() {
     }
     setCorrigeant(null)
   }
-
   const niveaux = ['facile', 'intermédiaire', 'difficile'] as const
   const qcmCount = exercices.filter(e => e.type === 'qcm').length
   const nomsChapitresSelectionnes = cours.filter(c => selected.includes(c.id)).map(c => c.chapitre).join(', ')

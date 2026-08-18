@@ -12,13 +12,16 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
+import { verifierUtilisateur } from '../../lib/verifyAuth'
+
 export async function POST(req: NextRequest) {
   try {
-    const { userId, prenom } = await req.json()
-
+    const userId = await verifierUtilisateur(req)
     if (!userId) {
-      return NextResponse.json({ error: 'userId requis' }, { status: 400 })
+      return NextResponse.json({ error: 'Tu dois être connecté pour utiliser cette fonctionnalité.' }, { status: 401 })
     }
+
+    const { prenom } = await req.json()
 
     const limite = await verifierLimite(userId, 'generer-debrief')
     if (!limite.autorise) {

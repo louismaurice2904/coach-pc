@@ -50,7 +50,7 @@ export default function ChatFlottant() {
     setMessages([{ role: 'assistant', contenu: `Salut ! Je suis là pour t'aider sur "${c.chapitre}". Pose-moi n'importe quelle question sur ce chapitre.` }])
   }
 
-  const envoyerMessage = async () => {
+    const envoyerMessage = async () => {
     if (!input.trim() || !chapitreActif) return
     const question = input
     setInput('')
@@ -58,16 +58,19 @@ export default function ChatFlottant() {
     setLoading(true)
 
     try {
+      const { data: { session } } = await supabase.auth.getSession()
       const res = await fetch('/api/chat-cours', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
         body: JSON.stringify({
           chapitre: chapitreActif.chapitre,
           contenu: chapitreActif.contenu,
           historique: messages,
           question,
-          niveauScolaire,
-          userId
+          niveauScolaire
         })
       })
       const data = await res.json()

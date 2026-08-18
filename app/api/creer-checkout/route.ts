@@ -1,14 +1,20 @@
 import Stripe from 'stripe'
 import { NextRequest, NextResponse } from 'next/server'
+import { verifierUtilisateur } from '../../lib/verifyAuth'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId, email } = await req.json()
+    const userId = await verifierUtilisateur(req)
+    if (!userId) {
+      return NextResponse.json({ error: 'Tu dois être connecté pour effectuer un paiement.' }, { status: 401 })
+    }
 
-    if (!userId || !email) {
-      return NextResponse.json({ error: 'userId et email requis' }, { status: 400 })
+    const { email } = await req.json()
+
+    if (!email) {
+      return NextResponse.json({ error: 'Email requis' }, { status: 400 })
     }
 
     const session = await stripe.checkout.sessions.create({

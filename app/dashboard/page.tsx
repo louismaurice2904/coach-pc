@@ -156,12 +156,17 @@ export default function Dashboard() {
         setDebrief(debriefExistant.contenu)
       } else {
         setLoadingDebrief(true)
-        try {
+                try {
+          const { data: { session } } = await supabase.auth.getSession()
           const res = await fetch('/api/generer-debrief', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: user.id, prenom: p?.prenom })
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session?.access_token}`
+            },
+            body: JSON.stringify({ prenom: p?.prenom })
           })
+            
           const data = await res.json()
           if (data.message) setDebrief(data.message)
         } catch (e) {

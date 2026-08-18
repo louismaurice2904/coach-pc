@@ -43,16 +43,20 @@ export default function Profil() {
     fetchProfil()
   }, [])
 
-  const handlePassPremium = async () => {
+    const handlePassPremium = async () => {
     setLoadingCheckout(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setMessage('Tu dois être connecté.'); setLoadingCheckout(false); return }
 
     try {
+      const { data: { session } } = await supabase.auth.getSession()
       const res = await fetch('/api/creer-checkout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id, email: user.email })
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        body: JSON.stringify({ email: user.email })
       })
       const data = await res.json()
       if (data.url) {

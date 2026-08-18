@@ -63,13 +63,17 @@ export default function Flashcards() {
     await genererCards(c)
   }
 
-  const genererCards = async (c: any) => {
+    const genererCards = async (c: any) => {
     setLoading(true)
     try {
+      const { data: { session } } = await supabase.auth.getSession()
       const res = await fetch('/api/generer-flashcards', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chapitre: c.chapitre, contenu: c.contenu, userId })
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        body: JSON.stringify({ chapitre: c.chapitre, contenu: c.contenu })
       })
       const data = await res.json()
       if (data.error) {

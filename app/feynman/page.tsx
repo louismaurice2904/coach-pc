@@ -37,17 +37,21 @@ export default function Feynman() {
     init()
   }, [])
 
-  const chargerNotions = async (c: any) => {
+    const chargerNotions = async (c: any) => {
     setSelected(c)
     setNotionActuelle(null)
     setEvaluation(null)
     setExplication('')
     setLoading(true)
     try {
+      const { data: { session } } = await supabase.auth.getSession()
       const res = await fetch('/api/feynman-notions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chapitre: c.chapitre, contenu: c.contenu, userId })
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        body: JSON.stringify({ chapitre: c.chapitre, contenu: c.contenu })
       })
       const data = await res.json()
       if (data.error) {
@@ -61,17 +65,21 @@ export default function Feynman() {
     setLoading(false)
   }
 
-  const evaluerExplication = async () => {
+    const evaluerExplication = async () => {
     if (!explication.trim() || explication.length < 20) {
       toast('Explique un peu plus en détail (au moins quelques phrases)', 'error')
       return
     }
     setLoadingEval(true)
     try {
+      const { data: { session } } = await supabase.auth.getSession()
       const res = await fetch('/api/feynman-evaluer', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notion: notionActuelle, explication, contenu: selected?.contenu, userId })
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        body: JSON.stringify({ notion: notionActuelle, explication, contenu: selected?.contenu })
       })
       const data = await res.json()
       if (data.error) {

@@ -53,19 +53,22 @@ export default function Evaluation() {
     reader.readAsDataURL(file)
   }
 
-  const lancerAnalyse = async () => {
+    const lancerAnalyse = async () => {
     if (!imageData) { toast('Ajoute une photo de ta copie', 'error'); return }
     setLoading(true)
     try {
+      const { data: { session } } = await supabase.auth.getSession()
       const res = await fetch('/api/analyser-evaluation', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
         body: JSON.stringify({
           imageBase64: imageData.base64,
           imageType: imageData.type,
           chapitre,
-          niveauScolaire,
-          userId
+          niveauScolaire
         })
       })
       const data = await res.json()

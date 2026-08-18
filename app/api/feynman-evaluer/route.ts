@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
 import { verifierLimite } from '../../lib/rateLimit'
+import { verifierUtilisateur } from '../../lib/verifyAuth'
 
 const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -8,14 +9,17 @@ const client = new Anthropic({
 
 export async function POST(req: NextRequest) {
   try {
-    const { notion, explication, contenu, userId } = await req.json()
-
-    if (userId) {
-      const limite = await verifierLimite(userId, 'feynman-evaluer')
-      if (!limite.autorise) {
-        return NextResponse.json({ error: limite.message }, { status: 429 })
-      }
+    const userId = await verifierUtilisateur(req)
+    if (!userId) {
+      return NextResponse.json({ error: 'Tu dois être connecté pour utiliser cette fonctionnalité.' }, { status: 401 })
     }
+
+    const limite = await verifierLimite(userId, 'feynman-evaluer')
+    if (!limite.autorise) {
+      return NextResponse.json({ error: limite.message }, { status: 429 })
+    }
+
+    const { notion, explication, contenu } = await req.json()
 
     if (!notion || !explication) {
       return NextResponse.json({ error: 'Notion et explication requises' }, { status: 400 })
@@ -32,40 +36,32 @@ export async function POST(req: NextRequest) {
 CONTEXTE
 NOTION À EXPLIQUER : ${notion}
 EXPLICATION DE L'ÉLÈVE : ${explication}
-EXTRAIT DU COURS (pour vérifier l'exactitude scientifique) :
+EXTRAIT DU COURS (pour vérifier l'exactitude) :
 ${contenu?.slice(0, 1500) || 'Non fourni'}
 
 TA MISSION
-Évalue cette explication selon 4 dimensions distinctes, car un élève peut être juste sur le fond mais confus dans la forme, ou l'inverse :
-
-1. EXACTITUDE SCIENTIFIQUE — Le contenu est-il factuellement correct par rapport au cours ? Une explication peut être claire et pédagogique tout en étant fausse — ne confonds jamais "bien expliqué" avec "correct".
-
-2. CLARTÉ DU RAISONNEMENT — Y a-t-il un vrai enchaînement logique (A implique B implique C), ou juste une accumulation de faits juxtaposés sans lien causal explicite ?
-
-3. PRÉCISION DU VOCABULAIRE — L'élève utilise-t-il les bons termes scientifiques au bon endroit, ou les évite-t-il en restant vague par manque de maîtrise (signe classique d'une compréhension de surface) ?
-
-4. CAPACITÉ À VULGARISER SANS TRAHIR LA RIGUEUR — C'est le cœur de la technique Feynman : simplifier n'est pas une excuse pour être imprécis. Une bonne explication reste juste même simplifiée. Distingue une vraie simplification pédagogique d'une simplification qui déforme la réalité scientifique.
+Évalue cette explication selon 4 dimensions : exactitude scientifique, clarté du raisonnement, précision du vocabulaire, capacité à vulgariser sans trahir la rigueur.
 
 CALIBRATION DU SCORE (1 à 5)
-— 1 : explication confuse, incorrecte sur le fond, ou trop courte pour être évaluable.
-— 2 : quelques éléments justes mais raisonnement décousu ou lacunes importantes.
-— 3 : compréhension correcte mais formulée de façon scolaire/récitée plutôt que vraiment assimilée, ou imprécisions mineures.
-— 4 : explication claire, juste, avec un vrai raisonnement personnel, quelques nuances manquantes.
-— 5 : explication digne d'être donnée à un autre élève : juste, claire, bien vulgarisée sans perte de rigueur.
+— 1 : explication confuse, incorrecte, ou trop courte.
+— 2 : quelques éléments justes mais raisonnement décousu.
+— 3 : compréhension correcte mais scolaire/récitée.
+— 4 : explication claire, juste, raisonnement personnel.
+— 5 : explication digne d'être donnée à un autre élève.
 
 EXIGENCES SUR LE RETOUR
-— points_forts : sois spécifique, cite ce que l'élève a précisément bien formulé, pas une généralité du type "bonne tentative".
-— points_flous : identifie l'endroit EXACT où le raisonnement devient vague ou où le vocabulaire manque de précision — pas juste "à préciser" sans dire quoi.
-— erreur_factuelle : signale UNIQUEMENT une vraie erreur scientifique vérifiable par rapport au cours fourni, jamais une simple maladresse de formulation. Si aucune erreur factuelle réelle, réponds exactement "null".
-— reformulation_modele : écris une explication courte (3-5 phrases) qui illustre concrètement le niveau de clarté et de rigueur à viser — pas un cours magistral, une vraie explication à la Feynman, comme si tu parlais à un ami curieux.
+— points_forts : sois spécifique, cite ce que l'élève a précisément bien formulé.
+— points_flous : identifie l'endroit EXACT où le raisonnement devient vague.
+— erreur_factuelle : uniquement une vraie erreur scientifique vérifiable, sinon "null".
+— reformulation_modele : une explication courte (3-5 phrases) illustrant le niveau attendu.
 
 Réponds UNIQUEMENT en JSON valide :
 {
   "score_clarte": 1 à 5,
   "points_forts": "Ce qui est précisément bien expliqué",
-  "points_flous": "L'endroit exact où ça manque de clarté ou de précision",
+  "points_flous": "L'endroit exact où ça manque de clarté",
   "erreur_factuelle": "L'erreur scientifique précise, ou null",
-  "reformulation_modele": "Une reformulation courte et exemplaire de cette notion"
+  "reformulation_modele": "Une reformulation courte et exemplaire"
 }`
         }
       ]

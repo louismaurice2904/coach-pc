@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
+import { verifierUtilisateur } from '../../lib/verifyAuth'
 
 const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -7,6 +8,11 @@ const client = new Anthropic({
 
 export async function POST(req: NextRequest) {
   try {
+    const userId = await verifierUtilisateur(req)
+    if (!userId) {
+      return NextResponse.json({ error: 'Tu dois être connecté pour utiliser cette fonctionnalité.' }, { status: 401 })
+    }
+
     const { imageBase64, imageType } = await req.json()
 
     if (!imageBase64) {
@@ -33,21 +39,21 @@ export async function POST(req: NextRequest) {
               text: `Tu es un expert en transcription de cours manuscrits ou imprimés de physique-chimie, avec une rigueur absolue sur l'exactitude scientifique du texte transcrit.
 
 TA MISSION
-Transcris intégralement le texte visible sur cette photo de cours, en respectant la structure d'origine (titres, sous-titres, listes, paragraphes).
+Transcris intégralement le texte visible sur cette photo de cours, en respectant la structure d'origine.
 
 RÈGLES IMPÉRATIVES
-— Si un mot ou un passage est réellement illisible (flou, coupé, écriture indéchiffrable), indique-le entre crochets [illisible] plutôt que de deviner ou d'inventer un mot plausible — une transcription honnête avec des trous vaut infiniment mieux qu'une transcription inventée qui semble complète.
-— Pour les formules mathématiques et chimiques, retranscris-les en texte brut simple (par exemple "v = -d[A]/dt", jamais de LaTeX ni de symboles Unicode comme ₂ ou ₃). Si une formule manuscrite est ambiguë entre deux lectures possibles, choisis la plus scientifiquement cohérente avec le contexte du cours, et ne signale l'ambiguïté que si aucune des deux lectures n'est clairement plus probable.
-— Respecte l'organisation visuelle : si le cours a des titres numérotés, des puces, des encadrés, reproduis cette structure avec des sauts de ligne appropriés plutôt que de tout aplatir en un seul bloc de texte.
-— Ne corrige jamais silencieusement une erreur scientifique que tu repères dans le cours d'origine (une formule mal recopiée par l'élève, par exemple) — transcris fidèlement ce qui est écrit, même si tu soupçonnes une erreur. La correction pédagogique n'est pas ton rôle ici, seulement la transcription fidèle.
-— Ignore les éléments qui ne font pas partie du contenu du cours lui-même (numéro de page, nom de l'élève en en-tête, taches ou artefacts visuels).
+— Si un mot ou passage est réellement illisible, indique [illisible] plutôt que de deviner.
+— Formules en texte brut simple, jamais de LaTeX ni de symboles Unicode.
+— Respecte l'organisation visuelle (titres, puces, encadrés).
+— Ne corrige jamais silencieusement une erreur scientifique du cours d'origine.
+— Ignore les éléments hors contenu (numéro de page, nom d'élève, artefacts visuels).
 
 Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
 {
   "texte": "Le texte transcrit ici, avec sauts de ligne préservés"
 }
 
-Si l'image ne contient aucun texte de cours lisible (photo floue, vide, ou sans rapport), réponds :
+Si l'image ne contient aucun texte de cours lisible, réponds :
 {"error": "Je n'arrive pas à lire ce cours clairement. Essaie une photo plus nette ou mieux cadrée."}`
             }
           ]

@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
+import { verifierUtilisateur } from '../../lib/verifyAuth'
 
 const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -7,6 +8,11 @@ const client = new Anthropic({
 
 export async function POST(req: NextRequest) {
   try {
+    const userId = await verifierUtilisateur(req)
+    if (!userId) {
+      return NextResponse.json({ error: 'Tu dois être connecté pour utiliser cette fonctionnalité.' }, { status: 401 })
+    }
+
     const { pdfBase64 } = await req.json()
 
     if (!pdfBase64) {
@@ -33,15 +39,14 @@ export async function POST(req: NextRequest) {
               text: `Tu es un expert en extraction de contenu de documents pédagogiques de physique-chimie, avec une rigueur absolue sur l'exactitude du texte extrait.
 
 TA MISSION
-Extrais l'intégralité du contenu de cours de ce PDF, en respectant la structure d'origine (titres, sous-titres, listes, paragraphes, numérotation).
+Extrais l'intégralité du contenu de cours de ce PDF, en respectant la structure d'origine.
 
 RÈGLES IMPÉRATIVES
-— Si le PDF contient plusieurs pages, extrais le contenu de toutes les pages dans l'ordre, sans en sauter.
-— Pour les formules mathématiques et chimiques, retranscris-les en texte brut simple (par exemple "v = -d[A]/dt", jamais de LaTeX ni de symboles Unicode comme ₂ ou ₃).
-— Ignore les éléments qui ne font pas partie du contenu pédagogique lui-même : en-têtes/pieds de page répétitifs, numéros de page, logos d'établissement, filigranes.
-— Si le PDF contient des schémas ou graphiques sans texte associé, indique brièvement leur présence et leur sujet entre crochets (exemple : [Schéma : courbe d'évolution de la concentration en fonction du temps]) plutôt que de les ignorer silencieusement — ça aide l'élève à savoir qu'une information visuelle existait dans le cours original.
-— Si une partie du document est illisible ou corrompue, indique-le clairement entre crochets [section illisible] plutôt que d'inventer du contenu pour combler le vide.
-— Respecte la hiérarchie du document (titres de chapitre, sous-parties numérotées) avec des sauts de ligne qui préservent cette structure.
+— Si plusieurs pages, extrais toutes les pages dans l'ordre.
+— Formules en texte brut simple, jamais de LaTeX ni de symboles Unicode.
+— Ignore en-têtes/pieds de page répétitifs, numéros de page, logos, filigranes.
+— Si schémas sans texte associé, indique brièvement leur présence entre crochets.
+— Si une partie est illisible, indique [section illisible] plutôt que d'inventer.
 
 Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
 {

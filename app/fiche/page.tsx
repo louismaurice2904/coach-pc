@@ -133,14 +133,18 @@ useEffect(() => {
     setLoading(false)
   }
 
-  const expliquerAutrement = async () => {
+    const expliquerAutrement = async () => {
     if (!selected || !fiche) return
     setLoadingExplication(true)
     try {
-      const res = await fetch('/api/generer-fiche', {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/api/expliquer-autrement', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chapitre: selected.chapitre, contenu: selected.contenu, niveauScolaire, userId })
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        body: JSON.stringify({ notion: selected.chapitre, explicationPrecedente: fiche.slice(0, 500), niveauScolaire })
       })
       const data = await res.json()
       if (data.error) {

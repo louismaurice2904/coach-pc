@@ -55,9 +55,13 @@ export default function Cours() {
       const imageType = file.type as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif'
 
       try {
+                const { data: { session } } = await supabase.auth.getSession()
         const res = await fetch('/api/lire-photo', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`
+          },
           body: JSON.stringify({ imageBase64: base64Data, imageType })
         })
         const data = await res.json()
@@ -85,9 +89,13 @@ export default function Cours() {
       const base64Data = base64Full.split(',')[1]
 
       try {
+                const { data: { session } } = await supabase.auth.getSession()
         const res = await fetch('/api/lire-pdf', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`
+          },
           body: JSON.stringify({ pdfBase64: base64Data })
         })
         const data = await res.json()

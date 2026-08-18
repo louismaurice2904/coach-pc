@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
+import { verifierUtilisateur } from '../../lib/verifyAuth'
 
 const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -7,6 +8,11 @@ const client = new Anthropic({
 
 export async function POST(req: NextRequest) {
   try {
+    const userId = await verifierUtilisateur(req)
+    if (!userId) {
+      return NextResponse.json({ error: 'Tu dois être connecté pour utiliser cette fonctionnalité.' }, { status: 401 })
+    }
+
     const { notion, explicationPrecedente, niveauScolaire } = await req.json()
 
     if (!notion) {
@@ -19,7 +25,7 @@ export async function POST(req: NextRequest) {
       messages: [
         {
           role: 'user',
-          content: `Tu es un professeur de physique-chimie réputé pour ta capacité à faire "déclic" chez les élèves qui n'ont pas compris une notion à la première explication — en changeant complètement d'angle plutôt qu'en répétant les mêmes mots dans un ordre différent.
+          content: `Tu es un professeur de physique-chimie réputé pour ta capacité à faire "déclic" chez les élèves qui n'ont pas compris une notion à la première explication — en changeant complètement d'angle plutôt qu'en répétant les mêmes mots.
 
 CONTEXTE
 Niveau de l'élève : ${niveauScolaire || 'Terminale'}
@@ -28,13 +34,13 @@ Explication précédente que l'élève n'a PAS comprise :
 ${explicationPrecedente}
 
 TA MISSION
-Propose une nouvelle explication de cette notion qui utilise une approche RÉELLEMENT différente de l'explication précédente — pas une simple reformulation synonymique. Change de stratégie pédagogique : si l'explication précédente était formelle/théorique, utilise une analogie concrète ancrée dans le quotidien ; si elle partait d'une formule, pars plutôt d'une observation physique ou d'un exemple avant d'y revenir ; si elle était abstraite, rends-la visuelle ou narrative.
+Propose une nouvelle explication qui utilise une approche RÉELLEMENT différente — change de stratégie pédagogique (analogie concrète, exemple avant formule, angle visuel/narratif).
 
 EXIGENCES
-— L'analogie ou l'angle choisi doit être fidèle scientifiquement : ne sacrifie jamais l'exactitude pour la simplicité de l'image. Si une analogie déforme la réalité physique sur un point important, précise-le explicitement plutôt que de laisser une fausse impression.
-— Reste centré sur EXACTEMENT la même notion que l'explication précédente — ne dérive pas vers un sujet connexe qui contournerait la difficulté plutôt que de la résoudre.
-— Longueur : 4-6 phrases, assez pour développer une vraie image mentale, assez court pour rester digeste après un premier échec de compréhension (l'élève est déjà un peu frustré, ne le noie pas sous un pavé).
-— Termine si pertinent par une phrase qui fait le pont explicite entre l'analogie utilisée et le vocabulaire scientifique exact attendu en cours — l'analogie doit mener vers la rigueur, pas la remplacer définitivement.
+— L'analogie doit rester fidèle scientifiquement.
+— Reste centré sur EXACTEMENT la même notion.
+— Longueur : 4-6 phrases.
+— Termine en faisant le pont vers le vocabulaire scientifique exact attendu.
 
 Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
 {

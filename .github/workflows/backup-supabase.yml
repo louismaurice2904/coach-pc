@@ -27,7 +27,7 @@ jobs:
           DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
           DATE=$(date +'%Y-%m-%d')
-          pg_dump "$DATABASE_URL" --no-owner --no-acl > backups/backup-$DATE.sql
+          /usr/lib/postgresql/17/bin/pg_dump "$DATABASE_URL" --no-owner --no-acl > backups/backup-$DATE.sql
           gzip backups/backup-$DATE.sql
 
       - name: Supprimer les sauvegardes de plus de 30 jours

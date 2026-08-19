@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
 import { verifierLimite } from '../../lib/rateLimit'
 import { verifierUtilisateur } from '../../lib/verifyAuth'
+import { verifierPremium } from '../../lib/verifyPremium'
 
 const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -9,10 +10,15 @@ const client = new Anthropic({
 
 export async function POST(req: NextRequest) {
   try {
-    const userId = await verifierUtilisateur(req)
+        const userId = await verifierUtilisateur(req)
 
     if (!userId) {
       return NextResponse.json({ error: 'Tu dois être connecté pour utiliser cette fonctionnalité.' }, { status: 401 })
+    }
+
+    const estPremium = await verifierPremium(userId)
+    if (!estPremium) {
+      return NextResponse.json({ error: 'Cette fonctionnalité est réservée aux membres Premium.' }, { status: 403 })
     }
 
     const limite = await verifierLimite(userId, 'generer-exercices')

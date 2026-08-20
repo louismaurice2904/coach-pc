@@ -14,5 +14,9 @@ export async function verifierUtilisateur(req: NextRequest): Promise<string | nu
   const { data, error } = await supabase.auth.getUser(token)
 
   if (error || !data.user) return null
+
+  const { data: profil } = await supabase.from('profils').select('suspendu').eq('user_id', data.user.id).single()
+  if (profil?.suspendu) return null
+
   return data.user.id
 }

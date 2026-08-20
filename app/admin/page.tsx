@@ -15,11 +15,13 @@ export default function Admin() {
   const [messages, setMessages] = useState<any[]>([])
   const [faqs, setFaqs] = useState<any[]>([])
   const [conseils, setConseils] = useState<any[]>([])
+  const [usage, setUsage] = useState<any[]>([])
   const [newQ, setNewQ] = useState('')
   const [newR, setNewR] = useState('')
   const [newConseil, setNewConseil] = useState('')
-  const [onglet, setOnglet] = useState<'messages' | 'faq' | 'conseils'>('messages')
+  const [onglet, setOnglet] = useState<'messages' | 'faq' | 'conseils' | 'usage'>('messages')
   const [loading, setLoading] = useState(true)
+  const [loadingUsage, setLoadingUsage] = useState(false)
 
   useEffect(() => {
     const init = async () => {
@@ -39,6 +41,40 @@ export default function Admin() {
     }
     init()
   }, [])
+
+  const chargerUsage = async () => {
+    setLoadingUsage(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/api/admin-usage', {
+        headers: { 'Authorization': `Bearer ${session?.access_token}` }
+      })
+      const data = await res.json()
+      if (data.classement) setUsage(data.classement)
+    } catch (e) {
+      console.error('Erreur chargement usage:', e)
+    }
+    setLoadingUsage(false)
+  }
+
+  const toggleSuspension = async (targetUserId: string, suspenduActuel: boolean) => {
+    const { data: { session } } = await supabase.auth.getSession()
+    await fetch('/api/admin-suspendre', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session?.access_token}`
+      },
+      body: JSON.stringify({ targetUserId, suspendre: !suspenduActuel })
+    })
+    setUsage(usage.map(u => u.user_id === targetUserId ? { ...u, suspendu: !suspenduActuel } : u))
+  }
+
+  useEffect(() => {
+    if (onglet === 'usage' && usage.length === 0) {
+      chargerUsage()
+    }
+  }, [onglet])
 
   const marquerLu = async (id: number) => {
     await supabase.from('messages').update({ lu: true }).eq('id', id)
@@ -101,11 +137,11 @@ export default function Admin() {
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '40px 24px', position: 'relative', zIndex: 1 }}>
         <div style={{ marginBottom: 32 }}>
           <h1 style={{ fontSize: 28, fontWeight: 900, color: 'white', letterSpacing: '-0.5px', marginBottom: 6 }}>⚙️ Panel Admin</h1>
-          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>Gère les messages, la FAQ et les conseils de Novalys.</p>
+          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>Gère les messages, la FAQ, les conseils et l'usage IA de Novalys.</p>
         </div>
 
-        <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
-          {(['messages', 'faq', 'conseils'] as const).map(tab => (
+        <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
+          {(['messages', 'faq', 'conseils', 'usage'] as const).map(tab => (
             <button key={tab} onClick={() => setOnglet(tab)} style={{
               padding: '10px 20px', borderRadius: 10, border: 'none', cursor: 'pointer',
               fontWeight: 700, fontSize: 13,
@@ -113,7 +149,7 @@ export default function Admin() {
               color: onglet === tab ? 'white' : 'rgba(255,255,255,0.4)',
               boxShadow: onglet === tab ? '0 0 20px rgba(99,102,241,0.4)' : 'none'
             }}>
-              {tab === 'messages' ? `💬 Messages (${messages.filter(m => !m.lu).length})` : tab === 'faq' ? '❓ FAQ' : '💡 Conseils du jour'}
+              {tab === 'messages' ? `💬 Messages (${messages.filter(m => !m.lu).length})` : tab === 'faq' ? '❓ FAQ' : tab === 'conseils' ? '💡 Conseils du jour' : '📊 Usage IA'}
             </button>
           ))}
         </div>
@@ -198,6 +234,59 @@ export default function Admin() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {onglet === 'usage' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>Classement des 30 derniers jours, par nombre d'appels IA.</p>
+              <button onClick={chargerUsage} style={{
+                background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+                color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: 600, padding: '8px 14px',
+                borderRadius: 8, cursor: 'pointer'
+              }}>
+                🔄 Actualiser
+              </button>
+            </div>
+
+            {loadingUsage ? (
+              <div className="glass" style={{ borderRadius: 20, padding: 40, textAlign: 'center' }}>
+                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>Chargement...</p>
+              </div>
+            ) : usage.length === 0 ? (
+              <div className="glass" style={{ borderRadius: 20, padding: 40, textAlign: 'center' }}>
+                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>Aucun usage enregistré sur les 30 derniers jours.</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {usage.map((u, i) => (
+                  <div key={u.user_id} className="glass" style={{
+                    borderRadius: 16, padding: '16px 20px', display: 'flex', justifyContent: 'space-between',
+                    alignItems: 'center', gap: 16, opacity: u.suspendu ? 0.5 : 1
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                      <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, fontWeight: 700, width: 24 }}>#{i + 1}</span>
+                      <div>
+                        <p style={{ color: 'white', fontWeight: 700, fontSize: 14 }}>{u.prenom}</p>
+                        {u.suspendu && <span style={{ color: '#fca5a5', fontSize: 11, fontWeight: 700 }}>SUSPENDU</span>}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                      <span style={{ color: '#38bdf8', fontWeight: 800, fontSize: 16 }}>{u.nb_appels} appels</span>
+                      <button onClick={() => toggleSuspension(u.user_id, u.suspendu)} style={{
+                        background: u.suspendu ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
+                        border: `1px solid ${u.suspendu ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
+                        color: u.suspendu ? '#86efac' : '#fca5a5', fontSize: 12, fontWeight: 600,
+                        padding: '8px 14px', borderRadius: 8, cursor: 'pointer'
+                      }}>
+                        {u.suspendu ? 'Réactiver' : 'Suspendre'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

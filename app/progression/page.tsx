@@ -9,21 +9,49 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-const chapitresProgram = [
-  'Cinétique chimique', 'Équilibres acido-basiques', 'Électrochimie',
-  'Mécanique', 'Thermodynamique', 'Ondes', 'Optique',
-  'Structure de la matière', 'Réactions nucléaires', 'Chimie organique',
-  'Spectroscopie', 'Électromagnétisme'
-]
+const PROGRAMME_PAR_NIVEAU: Record<string, string[]> = {
+  'Seconde': [
+    'Constitution et transformations de la matière',
+    'Mouvement et interactions',
+    'Ondes et signaux',
+    'Énergie, conversions et transferts',
+    'Description de la matière à l\'échelle macroscopique',
+    'Évolution temporelle d\'un système',
+    'Description d\'un fluide au repos',
+    'Sécurité et prévention des risques chimiques',
+  ],
+  'Première': [
+    'Ondes et signaux',
+    'Transformations chimiques',
+    'Mouvement et interactions mécaniques',
+    'Énergie : conversion et stockage',
+    'Suivi de l\'évolution d\'un système chimique',
+    'Quantité de matière et concentration',
+    'Structures et propriétés des entités organiques',
+    'Mouvement dans un champ',
+    'Réactions acido-basiques',
+    'Structure microscopique et propriétés macroscopiques',
+  ],
+  'Terminale': [
+    'Cinétique chimique', 'Équilibres acido-basiques', 'Électrochimie',
+    'Mécanique', 'Thermodynamique', 'Ondes', 'Optique',
+    'Structure de la matière', 'Réactions nucléaires', 'Chimie organique',
+    'Spectroscopie', 'Électromagnétisme'
+  ],
+}
 
 export default function Progression() {
   const [cours, setCours] = useState<any[]>([])
   const [progressions, setProgressions] = useState<Record<string, any>>({})
+  const [niveauScolaire, setNiveauScolaire] = useState('Terminale')
 
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/connexion'; return }
+
+      const { data: profil } = await supabase.from('profils').select('niveau_scolaire').eq('user_id', user.id).single()
+      if (profil?.niveau_scolaire) setNiveauScolaire(profil.niveau_scolaire)
 
       const { data: c } = await supabase.from('cours').select('*').eq('user_id', user.id)
       if (c) setCours(c)
@@ -38,6 +66,7 @@ export default function Progression() {
     init()
   }, [])
 
+  const chapitresProgram = PROGRAMME_PAR_NIVEAU[niveauScolaire] || PROGRAMME_PAR_NIVEAU['Terminale']
   const chapitresImportes = cours.map(c => c.chapitre)
   const totalScore = Object.values(progressions).reduce((acc: number, p: any) => acc + p.score_moyen, 0)
   const progression = chapitresProgram.length > 0
@@ -65,10 +94,9 @@ export default function Progression() {
       <div style={{ maxWidth: 700, margin: '0 auto', padding: '40px 24px', position: 'relative', zIndex: 1 }}>
         <h1 style={{ fontSize: 28, fontWeight: 900, color: 'white', letterSpacing: '-0.5px', marginBottom: 6, fontFamily: 'Inter, sans-serif' }}>📈 Ma progression</h1>
         <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, marginBottom: 32, fontFamily: 'Inter, sans-serif' }}>
-          Tes scores réels basés sur tes exercices.
+          Tes scores réels basés sur tes exercices — programme de {niveauScolaire}.
         </p>
 
-        {/* Score global */}
         <div className="glass" style={{ borderRadius: 20, padding: 24, marginBottom: 24 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <h2 style={{ color: 'white', fontWeight: 700, fontSize: 15, fontFamily: 'Inter, sans-serif' }}>Score global</h2>
@@ -91,7 +119,6 @@ export default function Progression() {
           </div>
         </div>
 
-        {/* Légende */}
         <div style={{ display: 'flex', gap: 16, marginBottom: 20, flexWrap: 'wrap' }}>
           {[
             { color: '#86efac', label: '≥ 80% — Maîtrisé' },
@@ -105,7 +132,6 @@ export default function Progression() {
           ))}
         </div>
 
-        {/* Liste chapitres */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {chapitresProgram.map(chap => {
             const importe = chapitresImportes.includes(chap)

@@ -19,6 +19,9 @@ export default function Profil() {
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [loadingCheckout, setLoadingCheckout] = useState(false)
+  const [showConfirmSuppression, setShowConfirmSuppression] = useState(false)
+  const [confirmationTexte, setConfirmationTexte] = useState('')
+  const [loadingSuppression, setLoadingSuppression] = useState(false)
 
   useEffect(() => {
     const fetchProfil = async () => {
@@ -43,7 +46,7 @@ export default function Profil() {
     fetchProfil()
   }, [])
 
-    const handlePassPremium = async () => {
+  const handlePassPremium = async () => {
     setLoadingCheckout(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setMessage('Tu dois être connecté.'); setLoadingCheckout(false); return }
@@ -85,6 +88,32 @@ export default function Profil() {
     setLoading(false)
   }
 
+  const handleSupprimerCompte = async () => {
+    if (confirmationTexte !== 'SUPPRIMER') return
+    setLoadingSuppression(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/api/supprimer-compte', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+      })
+      const data = await res.json()
+      if (data.success) {
+        await supabase.auth.signOut()
+        window.location.href = '/'
+      } else {
+        setMessage('Erreur lors de la suppression : ' + (data.error || 'inconnue'))
+        setLoadingSuppression(false)
+      }
+    } catch {
+      setMessage('Erreur de connexion.')
+      setLoadingSuppression(false)
+    }
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: '#070b18' }}>
       <style>{`
@@ -108,7 +137,6 @@ export default function Profil() {
 
       <div style={{ maxWidth: 560, margin: '0 auto', padding: '40px 24px', position: 'relative', zIndex: 1 }}>
 
-        {/* Statut Premium */}
         <div className="glass" style={{
           borderRadius: 16, padding: 20, marginBottom: 20,
           display: 'flex', justifyContent: 'space-between', alignItems: 'center'
@@ -182,7 +210,67 @@ export default function Profil() {
               ← Retour au tableau de bord
             </Link>
           </div>
+
+          <div style={{ marginTop: 32, paddingTop: 24, borderTop: '1px solid rgba(255,255,255,0.06)', textAlign: 'center' }}>
+            <button onClick={() => setShowConfirmSuppression(true)} style={{
+              background: 'none', border: 'none', color: 'rgba(252,165,165,0.6)',
+              fontSize: 12, cursor: 'pointer', fontFamily: 'Inter, sans-serif'
+            }}>
+              Supprimer mon compte
+            </button>
+          </div>
         </div>
+
+        {showConfirmSuppression && (
+          <div onClick={() => setShowConfirmSuppression(false)} style={{
+            position: 'fixed', inset: 0, zIndex: 999, background: 'rgba(0,0,0,0.7)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
+          }}>
+            <div onClick={e => e.stopPropagation()} style={{
+              background: '#0c1120', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 20,
+              padding: 32, maxWidth: 420, width: '100%'
+            }}>
+              <h2 style={{ color: 'white', fontWeight: 800, fontSize: 18, marginBottom: 12 }}>Supprimer définitivement ton compte ?</h2>
+              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, lineHeight: 1.7, marginBottom: 20 }}>
+                Cette action est irréversible. Tous tes cours, fiches, exercices, résultats et données personnelles seront définitivement supprimés. Ton abonnement Premium sera automatiquement annulé.
+              </p>
+              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginBottom: 10 }}>
+                Tape <strong style={{ color: '#fca5a5' }}>SUPPRIMER</strong> pour confirmer :
+              </p>
+              <input
+                type="text"
+                value={confirmationTexte}
+                onChange={e => setConfirmationTexte(e.target.value)}
+                style={{
+                  width: '100%', padding: '10px 14px', borderRadius: 10,
+                  background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+                  color: 'white', fontSize: 14, marginBottom: 20, outline: 'none'
+                }}
+              />
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button onClick={() => { setShowConfirmSuppression(false); setConfirmationTexte('') }} style={{
+                  flex: 1, padding: '12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.12)',
+                  background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', fontFamily: 'Inter, sans-serif'
+                }}>
+                  Annuler
+                </button>
+                <button
+                  onClick={handleSupprimerCompte}
+                  disabled={confirmationTexte !== 'SUPPRIMER' || loadingSuppression}
+                  style={{
+                    flex: 1, padding: '12px', borderRadius: 10, border: 'none',
+                    background: confirmationTexte === 'SUPPRIMER' ? '#ef4444' : 'rgba(239,68,68,0.2)',
+                    color: 'white', cursor: confirmationTexte === 'SUPPRIMER' ? 'pointer' : 'not-allowed',
+                    fontWeight: 700, fontFamily: 'Inter, sans-serif',
+                    opacity: loadingSuppression ? 0.6 : 1
+                  }}
+                >
+                  {loadingSuppression ? 'Suppression...' : 'Supprimer définitivement'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

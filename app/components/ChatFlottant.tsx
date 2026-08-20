@@ -24,7 +24,7 @@ export default function ChatFlottant() {
   const [niveauScolaire, setNiveauScolaire] = useState('Terminale')
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  const isAuthPage = pathname === '/' || pathname === '/connexion' || pathname === '/inscription'
+  const isAuthPage = pathname === '/' || pathname === '/connexion' || pathname === '/inscription' || pathname === '/parents'
 
   useEffect(() => {
     if (isAuthPage) return

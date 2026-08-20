@@ -51,7 +51,7 @@ export default function Nav() {
     router.push('/connexion')
   }
 
-  const isAuthPage = pathname === '/' || pathname === '/connexion' || pathname === '/inscription'
+  const isAuthPage = pathname === '/' || pathname === '/connexion' || pathname === '/inscription' || pathname === '/parents'
   if (isAuthPage) return null
 
   const isToolActive = toolLinks.some(l => l.href === pathname)

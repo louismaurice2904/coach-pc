@@ -46,6 +46,7 @@ export default function Dashboard() {
   const [debrief, setDebrief] = useState<string | null>(null)
   const [loadingDebrief, setLoadingDebrief] = useState(false)
   const [progressions, setProgressions] = useState<any[]>([])
+  const [essaiInfo, setEssaiInfo] = useState<{ joursRestants: number; abonnementPaye: boolean } | null>(null)
 
   const updateStreak = useCallback(async (userId: string, coursCount: number) => {
     const today = new Date().toISOString().split('T')[0]
@@ -115,9 +116,26 @@ export default function Dashboard() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/connexion'; return }
 
-      const { data: p } = await supabase.from('profils').select('*').eq('user_id', user.id).single()
-      const { data: c } = await supabase.from('cours').select('*').eq('user_id', user.id)
+            let { data: p } = await supabase.from('profils').select('*').eq('user_id', user.id).single()
 
+      if (!p) {
+        const finEssai = new Date()
+        finEssai.setDate(finEssai.getDate() + 7)
+        const { data: nouveauProfil } = await supabase.from('profils').insert({
+          user_id: user.id,
+          premium: true,
+          essai_premium_fin: finEssai.toISOString(),
+          essai_utilise: true,
+        }).select().single()
+        p = nouveauProfil
+      }
+
+      const { data: c } = await supabase.from('cours').select('*').eq('user_id', user.id)
+      if (p?.essai_premium_fin && !p?.abonnement_paye) {
+        const finEssai = new Date(p.essai_premium_fin)
+        const joursRestants = Math.ceil((finEssai.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+        setEssaiInfo({ joursRestants: Math.max(joursRestants, 0), abonnementPaye: false })
+      }
       if (p) {
         setProfil(p)
         if (p.date_bac) {
@@ -274,6 +292,23 @@ export default function Dashboard() {
 
         {/* Zone héros */}
         <div className="glass" style={{ borderRadius: 20, padding: isMobile ? 20 : 30, marginBottom: 18 }}>
+                    {essaiInfo && essaiInfo.joursRestants > 0 && (
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+              background: 'rgba(56,189,248,0.08)', border: '1px solid rgba(56,189,248,0.25)',
+              borderRadius: 12, padding: '12px 16px', marginBottom: 20, flexWrap: 'wrap'
+            }}>
+              <p style={{ color: '#7dd3fc', fontSize: 13, fontWeight: 600 }}>
+                👑 Essai Premium — {essaiInfo.joursRestants} jour{essaiInfo.joursRestants > 1 ? 's' : ''} restant{essaiInfo.joursRestants > 1 ? 's' : ''}
+              </p>
+              <Link href="/profil" style={{
+                color: '#070b18', background: 'white', fontWeight: 700, fontSize: 12,
+                padding: '8px 16px', borderRadius: 8, textDecoration: 'none'
+              }}>
+                Passer Premium →
+              </Link>
+            </div>
+          )}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
             <div>
               <h1 style={{ fontSize: isMobile ? 22 : 26, fontWeight: 900, color: 'white', letterSpacing: '-0.5px', marginBottom: 4 }}>

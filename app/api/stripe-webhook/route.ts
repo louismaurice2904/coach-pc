@@ -25,8 +25,8 @@ export async function POST(req: NextRequest) {
     const session = event.data.object as Stripe.Checkout.Session
     const userId = session.client_reference_id
 
-    if (userId) {
-      await supabase.from('profils').update({ premium: true }).eq('user_id', userId)
+        if (userId) {
+      await supabase.from('profils').upsert({ user_id: userId, premium: true, abonnement_paye: true }, { onConflict: 'user_id' })
       console.log('Premium activé pour', userId)
     }
   }

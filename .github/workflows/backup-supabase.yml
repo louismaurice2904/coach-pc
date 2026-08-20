@@ -41,3 +41,8 @@ jobs:
           git add backups/
           git commit -m "Sauvegarde automatique $(date +'%Y-%m-%d')" || echo "Rien à sauvegarder"
           git push
+
+      - name: Expirer les essais Premium
+        run: |
+          curl -X POST https://coach-pc.vercel.app/api/expirer-essais \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"

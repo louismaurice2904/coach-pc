@@ -880,7 +880,7 @@ export default function Home() {
             <div className="card" style={{ borderRadius: 16, padding: isMobile ? 24 : 36, textAlign: 'center' }}>
               <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12, fontWeight: 600, marginBottom: 8, letterSpacing: '0.06em' }}>À TITRE DE COMPARAISON</p>
               <h3 style={{ color: 'white', fontWeight: 800, fontSize: isMobile ? 18 : 24, marginBottom: 24 }}>
-                18 fois moins cher qu'un prof particulier.
+                16 fois moins cher qu'un prof particulier.
               </h3>
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14, maxWidth: 460, margin: '0 auto' }}>
                 <div style={{ border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 18 }}>
@@ -889,7 +889,7 @@ export default function Home() {
                 </div>
                 <div style={{ border: '1px solid rgba(56,189,248,0.3)', borderRadius: 12, padding: 18 }}>
                   <p style={{ color: '#7dd3fc', fontSize: 12, marginBottom: 6 }}>Novalys Premium</p>
-                  <p style={{ color: 'white', fontWeight: 800, fontSize: 20 }}>9€/mois</p>
+                  <p style={{ color: 'white', fontWeight: 800, fontSize: 20 }}>9,99€/mois</p>
                 </div>
               </div>
             </div>
@@ -935,7 +935,7 @@ export default function Home() {
                   <span style={{ background: '#38bdf8', color: '#070b18', borderRadius: 100, padding: '3px 10px', fontSize: 10, fontWeight: 800 }}>POPULAIRE</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 4 }}>
-                  <p style={{ color: 'white', fontWeight: 800, fontSize: 38 }}>9€</p>
+                  <p style={{ color: 'white', fontWeight: 800, fontSize: 38 }}>9,99€</p>
                   <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>/mois</p>
                 </div>
                 <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13, marginBottom: 24 }}>Résiliable à tout moment</p>

@@ -1,6 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { verifierUtilisateur } from '../../lib/verifyAuth'
+import { verifierPremium } from '../../lib/verifyPremium'
 import { verifierLimite } from '../../lib/rateLimit'
 
 const client = new Anthropic({
@@ -12,14 +14,17 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-import { verifierUtilisateur } from '../../lib/verifyAuth'
-
 export async function POST(req: NextRequest) {
   try {
     const userId = await verifierUtilisateur(req)
 
     if (!userId) {
       return NextResponse.json({ error: 'Tu dois être connecté pour utiliser cette fonctionnalité.' }, { status: 401 })
+    }
+
+    const estPremium = await verifierPremium(userId)
+    if (!estPremium) {
+      return NextResponse.json({ error: 'Cette fonctionnalité est réservée aux membres Premium.' }, { status: 403 })
     }
 
     const limite = await verifierLimite(userId, 'generer-planning-ia')

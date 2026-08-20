@@ -291,6 +291,7 @@ export default function Home() {
 
         {!isMobile ? (
           <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                        <Link href="/parents" style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, textDecoration: 'none' }}>Vous êtes parent ?</Link>
             <Link href="/connexion" style={{ color: 'rgba(255,255,255,0.65)', fontSize: 14, textDecoration: 'none' }}>Se connecter</Link>
             <MagneticLink href="/inscription" className="btn-primary" style={{ fontSize: 14, fontWeight: 700, padding: '10px 20px', borderRadius: 10, textDecoration: 'none' }}>
               Essai gratuit

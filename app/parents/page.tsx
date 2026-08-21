@@ -167,14 +167,10 @@ export default function Parents() {
           <div className="card" style={{ borderRadius: 16, padding: isMobile ? 24 : 36 }}>
             <p className="eyebrow" style={{ marginBottom: 16 }}>QUI EST DERRIÈRE NOVALYS</p>
             <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: 16 }}>
-              <div style={{
+                           <img src="/louis.png" alt="Louis, fondateur de Novalys" style={{
                 width: 52, height: 52, borderRadius: '50%', flexShrink: 0,
-                border: '1px dashed rgba(255,255,255,0.25)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'rgba(255,255,255,0.3)', fontSize: 10, fontWeight: 700
-              }}>
-                Photo
-              </div>
+                objectFit: 'cover', border: '1px solid rgba(255,255,255,0.15)'
+              }} />
               <div>
                 <p style={{ color: 'white', fontWeight: 700, fontSize: 15 }}>Louis, fondateur de Novalys</p>
                 <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12 }}>Ancien lycéen, aujourd'hui en classe préparatoire</p>

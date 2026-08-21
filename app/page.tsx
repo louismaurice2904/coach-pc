@@ -900,14 +900,10 @@ export default function Home() {
             <div className="card" style={{ borderRadius: 16, padding: isMobile ? 24 : 40 }}>
               <p className="eyebrow" style={{ marginBottom: 16 }}>LE FONDATEUR</p>
               <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', marginBottom: 20, flexWrap: 'wrap' }}>
-                <div style={{
+                              <img src="/louis.png" alt="Louis, fondateur de Novalys" style={{
                   width: 52, height: 52, borderRadius: '50%', flexShrink: 0,
-                  border: '1px dashed rgba(255,255,255,0.25)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: 'rgba(255,255,255,0.3)', fontSize: 10, fontWeight: 700, textAlign: 'center'
-                }}>
-                  Photo
-                </div>
+                  objectFit: 'cover', border: '1px solid rgba(255,255,255,0.15)'
+                }} />
                 <div>
                   <p style={{ color: 'white', fontWeight: 700, fontSize: 15, marginBottom: 2 }}>Louis, fondateur de Novalys</p>
                   <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12 }}>Élève en classe préparatoire</p>

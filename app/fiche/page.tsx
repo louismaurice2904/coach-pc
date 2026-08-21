@@ -20,14 +20,10 @@ export default function Fiche() {
   const [explicationAlternative, setExplicationAlternative] = useState('')
   const [loadingExplication, setLoadingExplication] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
-  const [isMobile, setIsMobile] = useState(false)
-
-useEffect(() => {
-  const check = () => setIsMobile(window.innerWidth < 820)
-  check()
-  window.addEventListener('resize', check)
-  return () => window.removeEventListener('resize', check)
-}, [])
+  const [longueur, setLongueur] = useState<'courte' | 'normale' | 'detaillee'>('normale')
+  const [niveauFormules, setNiveauFormules] = useState<'peu' | 'normal' | 'beaucoup'>('normal')
+  const [demandeLibre, setDemandeLibre] = useState('')
+  const [showPersonnalisation, setShowPersonnalisation] = useState(false)
 
   useEffect(() => {
     const init = async () => {
@@ -37,8 +33,10 @@ useEffect(() => {
       const { data } = await supabase.from('cours').select('*').eq('user_id', user.id)
       if (data) setCours(data)
 
-      const { data: profil } = await supabase.from('profils').select('niveau_scolaire').eq('user_id', user.id).single()
+      const { data: profil } = await supabase.from('profils').select('niveau_scolaire, pref_longueur_fiche, pref_niveau_formules').eq('user_id', user.id).single()
       if (profil?.niveau_scolaire) setNiveauScolaire(profil.niveau_scolaire)
+      if (profil?.pref_longueur_fiche) setLongueur(profil.pref_longueur_fiche)
+      if (profil?.pref_niveau_formules) setNiveauFormules(profil.pref_niveau_formules)
 
       const { data: fichesData } = await supabase.from('fiches_generees').select('*').eq('user_id', user.id)
       if (fichesData) {
@@ -50,90 +48,54 @@ useEffect(() => {
     init()
   }, [])
 
-  const genererFiche = async (c: any) => {
+  const genererFicheAvecParams = async (c: any) => {
+    setFiche('')
+    setLoading(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/api/generer-fiche', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        body: JSON.stringify({ chapitre: c.chapitre, contenu: c.contenu, niveauScolaire, longueur, niveauFormules, demandeLibre })
+      })
+      const data = await res.json()
+      if (data.error) {
+        toast(data.error, 'error')
+      } else {
+        setFiche(data.fiche)
+        setFiches(prev => ({ ...prev, [c.chapitre]: data.fiche }))
+
+        if (userId) {
+          await supabase.from('fiches_generees').delete().eq('user_id', userId).eq('chapitre', c.chapitre)
+          await supabase.from('fiches_generees').insert({
+            user_id: userId,
+            chapitre: c.chapitre,
+            contenu_fiche: data.fiche
+          })
+        }
+
+        toast('Fiche générée ✅', 'success')
+      }
+    } catch {
+      toast('Erreur de connexion', 'error')
+    }
+    setLoading(false)
+  }
+
+  const selectionnerChapitre = (c: any) => {
     setSelected(c)
     setExplicationAlternative('')
-
     if (fiches[c.chapitre]) {
       setFiche(fiches[c.chapitre])
-      return
+    } else {
+      setFiche('')
     }
-
-    setFiche('')
-    setLoading(true)
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      const res = await fetch('/api/generer-fiche', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`
-        },
-        body: JSON.stringify({ chapitre: c.chapitre, contenu: c.contenu, niveauScolaire })
-      })
-      const data = await res.json()
-      if (data.error) {
-        toast(data.error, 'error')
-      } else {
-        setFiche(data.fiche)
-        setFiches(prev => ({ ...prev, [c.chapitre]: data.fiche }))
-
-        const { data: { user } } = await supabase.auth.getUser()
-        if (user) {
-          await supabase.from('fiches_generees').insert({
-            user_id: user.id,
-            chapitre: c.chapitre,
-            contenu_fiche: data.fiche
-          })
-        }
-
-        toast('Fiche générée et sauvegardée ✅', 'success')
-      }
-    } catch (e) {
-      toast('Erreur de connexion', 'error')
-    }
-    setLoading(false)
   }
 
-  const regenererFiche = async (c: any) => {
-    setFiche('')
-    setExplicationAlternative('')
-    setLoading(true)
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      const res = await fetch('/api/generer-fiche', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`
-        },
-        body: JSON.stringify({ chapitre: c.chapitre, contenu: c.contenu, niveauScolaire })
-      })
-      const data = await res.json()
-      if (data.error) {
-        toast(data.error, 'error')
-      } else {
-        setFiche(data.fiche)
-        setFiches(prev => ({ ...prev, [c.chapitre]: data.fiche }))
-
-        const { data: { user } } = await supabase.auth.getUser()
-        if (user) {
-          await supabase.from('fiches_generees').delete().eq('user_id', user.id).eq('chapitre', c.chapitre)
-          await supabase.from('fiches_generees').insert({
-            user_id: user.id,
-            chapitre: c.chapitre,
-            contenu_fiche: data.fiche
-          })
-        }
-        toast('Fiche régénérée ✅', 'success')
-      }
-    } catch (e) {
-      toast('Erreur de connexion', 'error')
-    }
-    setLoading(false)
-  }
-
-    const expliquerAutrement = async () => {
+  const expliquerAutrement = async () => {
     if (!selected || !fiche) return
     setLoadingExplication(true)
     try {
@@ -203,6 +165,9 @@ useEffect(() => {
         .card-hover:hover{background:rgba(255,255,255,0.05)!important;border-color:rgba(56,189,248,0.4)!important}
         .btn-primary{background:#fff;color:#070b18;transition:opacity 0.2s ease;border:none;cursor:pointer}
         .btn-primary:hover{opacity:0.85}
+        textarea{background:rgba(255,255,255,0.05)!important;border:1px solid rgba(255,255,255,0.1)!important;color:white!important;border-radius:12px;padding:12px 14px;width:100%;outline:none;font-size:13px;font-family:Inter,sans-serif;resize:vertical}
+        textarea::placeholder{color:rgba(255,255,255,0.25)}
+        textarea:focus{border-color:rgba(56,189,248,0.6)!important}
         @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
         @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
@@ -226,18 +191,11 @@ useEffect(() => {
           <div>
             <h1 style={{ fontSize: 28, fontWeight: 900, color: 'white', letterSpacing: '-0.5px', marginBottom: 6, fontFamily: 'Inter, sans-serif' }}>📋 Mes fiches</h1>
             <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, fontFamily: 'Inter, sans-serif' }}>
-              Sélectionne un chapitre pour voir ou générer sa fiche.
+              Sélectionne un chapitre, personnalise-la à ta façon.
             </p>
           </div>
           {selected && fiche && (
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => regenererFiche(selected)} className="no-print" style={{
-                color: 'rgba(255,255,255,0.6)', fontWeight: 600, fontSize: 13, padding: '12px 16px',
-                borderRadius: 12, fontFamily: 'Inter, sans-serif', background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer'
-              }}>
-                🔄 Régénérer
-              </button>
               <button onClick={() => window.print()} className="btn-primary no-print" style={{
                 fontWeight: 700, fontSize: 13, padding: '12px 20px', borderRadius: 12, fontFamily: 'Inter, sans-serif'
               }}>
@@ -247,7 +205,8 @@ useEffect(() => {
           )}
         </div>
 
-<div className="fiche-grid" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : (selected ? '280px 1fr' : '1fr'), gap: 20 }}>
+        <div className="fiche-grid" style={{ display: 'grid', gridTemplateColumns: selected ? '300px 1fr' : '1fr', gap: 20 }}>
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }} className="no-print">
             {cours.length === 0 ? (
               <div className="glass" style={{ borderRadius: 20, padding: 40, textAlign: 'center' }}>
@@ -260,7 +219,7 @@ useEffect(() => {
               <div
                 key={c.id}
                 className="glass card-hover"
-                onClick={() => genererFiche(c)}
+                onClick={() => selectionnerChapitre(c)}
                 style={{
                   borderRadius: 16, padding: '14px 18px',
                   border: selected?.id === c.id ? '1px solid rgba(56,189,248,0.5)' : '1px solid rgba(255,255,255,0.08)',
@@ -276,11 +235,79 @@ useEffect(() => {
                     {c.chapitre}
                   </p>
                   {fiches[c.chapitre] && (
-                    <span style={{ fontSize: 10, color: '#86efac', fontWeight: 700, fontFamily: 'Inter, sans-serif' }}>✓ GÉNÉRÉE</span>
+                    <span style={{ fontSize: 10, color: '#86efac', fontWeight: 700, fontFamily: 'Inter, sans-serif' }}>✓</span>
                   )}
                 </div>
               </div>
             ))}
+
+            {selected && (
+              <div className="glass" style={{ borderRadius: 16, padding: 18, marginTop: 8 }}>
+                <button onClick={() => setShowPersonnalisation(!showPersonnalisation)} style={{
+                  background: 'none', border: 'none', color: '#38bdf8', fontSize: 12, fontWeight: 600,
+                  cursor: 'pointer', fontFamily: 'Inter, sans-serif', marginBottom: showPersonnalisation ? 14 : 0,
+                  display: 'flex', alignItems: 'center', gap: 6, width: '100%'
+                }}>
+                  {showPersonnalisation ? '▾' : '▸'} Personnaliser la fiche
+                </button>
+
+                {showPersonnalisation && (
+                  <div style={{ animation: 'fadeIn 0.3s ease' }}>
+                    <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', display: 'block', marginBottom: 8, fontFamily: 'Inter, sans-serif' }}>LONGUEUR</label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
+                      {[
+                        { id: 'courte', label: 'Courte et synthétique' },
+                        { id: 'normale', label: 'Normale' },
+                        { id: 'detaillee', label: 'Détaillée' },
+                      ].map(l => (
+                        <button key={l.id} onClick={() => setLongueur(l.id as any)} style={{
+                          padding: '8px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', textAlign: 'left',
+                          fontWeight: 600, fontSize: 12, fontFamily: 'Inter, sans-serif',
+                          background: longueur === l.id ? 'rgba(56,189,248,0.15)' : 'rgba(255,255,255,0.03)',
+                          color: longueur === l.id ? '#7dd3fc' : 'rgba(255,255,255,0.5)',
+                        }}>
+                          {l.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', display: 'block', marginBottom: 8, fontFamily: 'Inter, sans-serif' }}>FORMULES</label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
+                      {[
+                        { id: 'peu', label: 'Peu de formules' },
+                        { id: 'normal', label: 'Normal' },
+                        { id: 'beaucoup', label: 'Beaucoup, avec exemples' },
+                      ].map(f => (
+                        <button key={f.id} onClick={() => setNiveauFormules(f.id as any)} style={{
+                          padding: '8px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', textAlign: 'left',
+                          fontWeight: 600, fontSize: 12, fontFamily: 'Inter, sans-serif',
+                          background: niveauFormules === f.id ? 'rgba(56,189,248,0.15)' : 'rgba(255,255,255,0.03)',
+                          color: niveauFormules === f.id ? '#7dd3fc' : 'rgba(255,255,255,0.5)',
+                        }}>
+                          {f.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', display: 'block', marginBottom: 8, fontFamily: 'Inter, sans-serif' }}>DEMANDE PRÉCISE</label>
+                    <textarea
+                      rows={3}
+                      placeholder="Ex : beaucoup d'exemples concrets, insiste sur la méthode..."
+                      value={demandeLibre}
+                      onChange={e => setDemandeLibre(e.target.value)}
+                      style={{ marginBottom: 14 }}
+                    />
+                  </div>
+                )}
+
+                <button onClick={() => genererFicheAvecParams(selected)} disabled={loading} className="btn-primary" style={{
+                  width: '100%', fontWeight: 700, fontSize: 13, padding: '12px', borderRadius: 10, fontFamily: 'Inter, sans-serif',
+                  opacity: loading ? 0.6 : 1
+                }}>
+                  {loading ? 'Génération...' : fiches[selected.chapitre] ? '🔄 Régénérer' : '✨ Générer'}
+                </button>
+              </div>
+            )}
           </div>
 
           {selected && (
@@ -293,7 +320,7 @@ useEffect(() => {
                       🤖 Claude génère ta fiche...
                     </p>
                     <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, fontFamily: 'Inter, sans-serif', animation: 'pulse 2s ease-in-out infinite' }}>
-                      Analyse du cours en cours, ça prend 10-15 secondes
+                      Ça prend 10-15 secondes
                     </p>
                   </div>
                 </div>
@@ -303,9 +330,6 @@ useEffect(() => {
                     <div>
                       <p style={{ color: '#7dd3fc', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', marginBottom: 4, fontFamily: 'Inter, sans-serif' }}>FICHE DE RÉVISION • GÉNÉRÉE PAR IA</p>
                       <h2 style={{ color: 'white', fontWeight: 900, fontSize: 20, fontFamily: 'Inter, sans-serif' }}>{selected.chapitre}</h2>
-                    </div>
-                    <div style={{ background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: 100, padding: '4px 12px' }} className="no-print">
-                      <span style={{ color: '#86efac', fontSize: 11, fontWeight: 700, fontFamily: 'Inter, sans-serif' }}>✓ Prête</span>
                     </div>
                   </div>
                   <div>{formaterFiche(fiche)}</div>
@@ -337,7 +361,14 @@ useEffect(() => {
                     )}
                   </div>
                 </div>
-              ) : null}
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 300, textAlign: 'center' }}>
+                  <p style={{ fontSize: 40, marginBottom: 16 }}>👈</p>
+                  <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, fontFamily: 'Inter, sans-serif' }}>
+                    Personnalise et génère ta fiche à gauche.
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>

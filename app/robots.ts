@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/dashboard', '/profil', '/admin', '/api/'],
     },
-    sitemap: 'https://coach-pc.vercel.app/sitemap.xml',
+    sitemap: 'https://novalys-app.fr/sitemap.xml',
   }
 }

@@ -44,9 +44,9 @@ jobs:
 
       - name: Expirer les essais Premium
         run: |
-          curl -X POST https://coach-pc.vercel.app/api/expirer-essais \
+          curl -X POST https://novalys-app.fr/api/expirer-essais \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
           - name: Envoyer les résumés hebdomadaires aux parents
         run: |
-          curl -X POST https://coach-pc.vercel.app/api/envoyer-resume-parent \
+          curl -X POST https://novalys-app.fr/api/envoyer-resume-parent \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"

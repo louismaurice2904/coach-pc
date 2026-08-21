@@ -40,7 +40,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   );
 }
 export const metadata: Metadata = {
-  metadataBase: new URL('https://coach-pc.vercel.app'),
+  metadataBase: new URL('https://novalys-app.fr'),
   title: {
     default: 'Novalys — Ton coach IA pour la physique-chimie',
     template: '%s | Novalys',
@@ -51,7 +51,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Novalys — Ton coach IA pour la physique-chimie',
     description: 'Fiches, exercices et suivi personnalisé générés par IA, de la Seconde à la Terminale. Arrête de te demander quoi réviser.',
-    url: 'https://coach-pc.vercel.app',
+    url: 'https://novalys-app.fr',
     siteName: 'Novalys',
     locale: 'fr_FR',
     type: 'website',

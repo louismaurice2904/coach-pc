@@ -1,6 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
-import { verifierUtilisateur } from '../../lib/verifyAuth'
 
 const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -8,20 +7,31 @@ const client = new Anthropic({
 
 export async function POST(req: NextRequest) {
   try {
-    const userId = await verifierUtilisateur(req)
-    if (!userId) {
-      return NextResponse.json({ error: 'Tu dois être connecté pour utiliser cette fonctionnalité.' }, { status: 401 })
-    }
-
-    const { chapitre, contenu, niveauScolaire } = await req.json()
+    const { chapitre, contenu, niveauScolaire, longueur, niveauFormules, demandeLibre } = await req.json()
 
     if (!chapitre || !contenu) {
       return NextResponse.json({ error: 'Chapitre et contenu requis' }, { status: 400 })
     }
 
+    const longueurTexte = {
+      'courte': 'très synthétique — va droit à l\'essentiel, une phrase par idée maximum, pas de développement superflu.',
+      'normale': 'équilibrée — assez complète pour être autosuffisante, sans être un roman.',
+      'detaillee': 'détaillée — développe chaque point avec des explications complètes et plusieurs exemples si pertinent.',
+    }[longueur as string] || 'équilibrée — assez complète pour être autosuffisante, sans être un roman.'
+
+    const formulesTexte = {
+      'peu': 'Ne mentionne que les formules absolument indispensables, sans surcharger la fiche.',
+      'normal': 'Inclus toutes les formules importantes du chapitre, avec leur signification.',
+      'beaucoup': 'Sois exhaustif sur les formules : inclus-les toutes, avec leurs variantes, leurs conditions d\'application, et des exemples chiffrés d\'application pour chacune.',
+    }[niveauFormules as string] || 'Inclus toutes les formules importantes du chapitre, avec leur signification.'
+
+    const demandeLibreTexte = demandeLibre
+      ? `\n\nDEMANDE SPÉCIFIQUE DE L'ÉLÈVE POUR CETTE FICHE (à respecter en priorité, en plus des règles ci-dessus) :\n${demandeLibre}`
+      : ''
+
     const message = await client.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 2000,
+      max_tokens: 2500,
       messages: [
         {
           role: 'user',
@@ -32,30 +42,33 @@ Niveau de l'élève : ${niveauScolaire || 'Terminale'}
 Chapitre : "${chapitre}"
 Cette fiche sera lue par un élève seul, sans professeur pour clarifier — elle doit donc être autosuffisante.
 
-TA MISSION
-Produire une fiche de révision en 5 sections, à partir UNIQUEMENT du cours fourni ci-dessous.
+PRÉFÉRENCES DE L'ÉLÈVE POUR CETTE FICHE
+— Longueur souhaitée : ${longueurTexte}
+— Formules : ${formulesTexte}${demandeLibreTexte}
 
-1. 📌 POINTS CLÉS (3 à 5 maximum)
-Chaque point doit être une phrase complète et autonome, compréhensible sans avoir besoin de relire le cours original. Interdiction absolue de formulations creuses type "il faut comprendre que..." ou "il est important de noter que..." — va directement à l'idée factuelle.
+TA MISSION
+Produire une fiche de révision en 5 sections, à partir UNIQUEMENT du cours fourni ci-dessous, en respectant scrupuleusement les préférences de l'élève ci-dessus.
+
+1. 📌 POINTS CLÉS
+Chaque point doit être une phrase complète et autonome, compréhensible sans avoir besoin de relire le cours original. Interdiction absolue de formulations creuses type "il faut comprendre que..." — va directement à l'idée factuelle.
 
 2. 📐 FORMULES IMPORTANTES
-Pour chaque formule : (a) la formule elle-même en texte brut, (b) une ligne "où" qui définit CHAQUE symbole avec son unité, (c) si la formule a des conditions de validité, précise-le explicitement.
+Pour chaque formule : la formule en texte brut, une ligne "où" qui définit chaque symbole avec son unité, et les conditions de validité si elles existent. Respecte le niveau de détail demandé par l'élève ci-dessus.
 
 3. 🔍 DÉFINITIONS
 Uniquement les termes qui apparaissent explicitement dans le cours fourni. N'invente JAMAIS la définition d'un concept absent du texte source.
 
 4. ⚠️ POINTS D'ATTENTION
-Identifie 2-3 confusions ou erreurs SPÉCIFIQUES à ce chapitre précis. Si le cours ne permet pas d'identifier un piège conceptuel propre au chapitre, décris plutôt une erreur méthodologique typique.
+Identifie 2-3 confusions ou erreurs SPÉCIFIQUES à ce chapitre précis, adaptées au niveau réel de l'élève (${niveauScolaire || 'Terminale'}) — un piège de Terminale n'a pas de sens pour un élève de Seconde sur le même thème.
 
 5. 💡 MÉTHODE
-Une démarche numérotée (2 à 4 étapes) pour aborder un exercice typique de ce chapitre.
+Une démarche numérotée (2 à 4 étapes) pour aborder un exercice typique de ce chapitre, à CE niveau précis.
 
 RÈGLES IMPÉRATIVES
-— Fidélité totale au texte source.
-— Niveau de langage calibré pour un élève de ${niveauScolaire || 'Terminale'}.
+— Fidélité totale au texte source : si une information n'est pas dans le cours fourni, elle n'apparaît pas dans la fiche.
+— Niveau de langage et de complexité STRICTEMEN. calibré pour un élève de ${niveauScolaire || 'Terminale'} — n'introduis jamais une notion, un formalisme ou un degré d'abstraction qui dépasserait ce qui est attendu à ce niveau précis, même si le cours fourni semblait le permettre.
 — Formules et notations chimiques exclusivement en texte brut (H2O, jamais de LaTeX ni d'exposants Unicode).
-— Préfère un exemple chiffré concret à une explication purement abstraite quand c'est pertinent.
-— Si le cours fourni est très court ou incomplet, indique honnêtement dans la section concernée que l'information n'est pas présente.
+— Si le cours fourni est très court ou incomplet, indique-le honnêtement plutôt que d'inventer du contenu.
 
 COURS À ANALYSER :
 ${contenu}`

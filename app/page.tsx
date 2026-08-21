@@ -554,7 +554,7 @@ export default function Home() {
             {[
               { num: '01', titre: 'Importe ton cours.', desc: 'Colle ton cours, prends une photo, ou upload un PDF. Novalys lit et comprend le contenu instantanément.' },
               { num: '02', titre: 'Reçois ta fiche.', desc: 'Une fiche de révision claire et structurée : points clés, formules, définitions, méthode.' },
-              { num: '03', titre: "T'entraîne avec des exercices.", desc: 'Des exercices au format officiel du bac, calibrés à ton niveau exact, avec correction immédiate.' },
+              { num: '03', titre: "entraîne-toi avec des exercices personnalisés.", desc: 'Des exercices au format officiel du bac, calibrés à ton niveau exact, avec correction immédiate.' },
               { num: '04', titre: 'Suis ta progression.', desc: 'Visualise tes points forts et lacunes, chapitre par chapitre, et sache où concentrer tes efforts.' },
             ].map((step, i) => (
               <AnimatedSection key={step.num} delay={i * 0.08}>

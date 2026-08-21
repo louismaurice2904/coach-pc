@@ -17,6 +17,9 @@ export default function Exercices() {
   const [exercices, setExercices] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [niveau, setNiveau] = useState<'facile' | 'intermédiaire' | 'difficile'>('intermédiaire')
+  const [typeExercices, setTypeExercices] = useState<'varie' | 'qcm' | 'longs'>('varie')
+  const [demandeLibre, setDemandeLibre] = useState('')
+  const [showPersonnalisation, setShowPersonnalisation] = useState(false)
   const [reponses, setReponses] = useState<Record<number, any>>({})
   const [reponsesOuvertes, setReponsesOuvertes] = useState<Record<number, string>>({})
   const [valide, setValide] = useState(false)
@@ -35,9 +38,10 @@ export default function Exercices() {
       setUserId(user.id)
       const { data } = await supabase.from('cours').select('*').eq('user_id', user.id)
       if (data) setCours(data)
-      const { data: profil } = await supabase.from('profils').select('premium, niveau_scolaire').eq('user_id', user.id).single()
+      const { data: profil } = await supabase.from('profils').select('premium, niveau_scolaire, pref_type_exercices').eq('user_id', user.id).single()
       setIsPremium(profil?.premium || false)
       if (profil?.niveau_scolaire) setNiveauScolaire(profil.niveau_scolaire)
+      if (profil?.pref_type_exercices) setTypeExercices(profil.pref_type_exercices)
     }
     init()
   }, [])
@@ -59,17 +63,21 @@ export default function Exercices() {
     const chapitresSelectionnes = cours.filter(c => selected.includes(c.id))
 
     try {
+      const { data: { session } } = await supabase.auth.getSession()
       const res = await fetch('/api/generer-exercices', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chapitres: chapitresSelectionnes, niveau, niveauScolaire, userId })
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        body: JSON.stringify({ chapitres: chapitresSelectionnes, niveau, niveauScolaire, typeExercices, demandeLibre })
       })
       const data = await res.json()
       if (data.error) {
         toast(data.error, 'error')
       } else {
         setExercices(data.exercices || [])
-        toast('5 exercices générés ✅', 'success')
+        toast('Exercices générés ✅', 'success')
       }
     } catch {
       toast('Erreur de connexion', 'error')
@@ -105,7 +113,8 @@ export default function Exercices() {
 
     setScore(s)
     setValide(true)
-    toast(`Score QCM : ${s}/${qcmCount} ✅`, 'success')
+    if (qcmCount > 0) toast(`Score QCM : ${s}/${qcmCount} ✅`, 'success')
+    else toast('Exercices terminés ✅', 'success')
 
     try {
       if (!user) return
@@ -118,6 +127,8 @@ export default function Exercices() {
         const scorePctChapitre = exercicesDuChapitre.length > 0
           ? Math.round((bonnesReponsesChapitre / exercicesDuChapitre.length) * 100)
           : 0
+
+        if (exercicesDuChapitre.length === 0) continue
 
         const { data: existing } = await supabase
           .from('progression_chapitres')
@@ -141,9 +152,6 @@ export default function Exercices() {
           })
         }
       }
-
-      if (s === qcmCount) toast('🎉 Sans faute sur les QCM !', 'badge')
-      else if (s / Math.max(qcmCount, 1) >= 0.8) toast('💪 Très bon score !', 'success')
     } catch (e) {
       console.error('Erreur mise à jour progression:', e)
     }
@@ -157,7 +165,7 @@ export default function Exercices() {
     setCorrections({})
   }
 
-const corrigerReponse = async (ex: any) => {
+  const corrigerReponse = async (ex: any) => {
     if (!reponsesOuvertes[ex.id] || corrigeant === ex.id) return
     setCorrigeant(ex.id)
     try {
@@ -185,6 +193,7 @@ const corrigerReponse = async (ex: any) => {
     }
     setCorrigeant(null)
   }
+
   const niveaux = ['facile', 'intermédiaire', 'difficile'] as const
   const qcmCount = exercices.filter(e => e.type === 'qcm').length
   const nomsChapitresSelectionnes = cours.filter(c => selected.includes(c.id)).map(c => c.chapitre).join(', ')
@@ -219,7 +228,7 @@ const corrigerReponse = async (ex: any) => {
           )}
         </div>
         <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, marginBottom: 32, fontFamily: 'Inter, sans-serif' }}>
-          Des exercices générés par IA à partir de tes cours, adaptés à ton niveau. Sélectionne un ou plusieurs chapitres.
+          Des exercices générés par IA, entièrement personnalisables à ta façon de travailler.
         </p>
 
         <div className="glass" style={{ borderRadius: 20, padding: 24, marginBottom: 24 }}>
@@ -246,8 +255,8 @@ const corrigerReponse = async (ex: any) => {
             ))}
           </div>
 
-          <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', display: 'block', marginBottom: 10, fontFamily: 'Inter, sans-serif' }}>NIVEAU</label>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+          <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', display: 'block', marginBottom: 10, fontFamily: 'Inter, sans-serif' }}>NIVEAU DE DIFFICULTÉ</label>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
             {niveaux.map(n => (
               <button key={n} onClick={() => setNiveau(n)} style={{
                 flex: 1, padding: '10px', borderRadius: 10, border: 'none', cursor: 'pointer',
@@ -260,12 +269,51 @@ const corrigerReponse = async (ex: any) => {
             ))}
           </div>
 
+          <button onClick={() => setShowPersonnalisation(!showPersonnalisation)} style={{
+            background: 'none', border: 'none', color: '#38bdf8', fontSize: 13, fontWeight: 600,
+            cursor: 'pointer', fontFamily: 'Inter, sans-serif', marginBottom: showPersonnalisation ? 16 : 24,
+            display: 'flex', alignItems: 'center', gap: 6
+          }}>
+            {showPersonnalisation ? '▾' : '▸'} Personnaliser cette génération
+          </button>
+
+          {showPersonnalisation && (
+            <div style={{ animation: 'fadeIn 0.3s ease', marginBottom: 24 }}>
+              <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', display: 'block', marginBottom: 10, fontFamily: 'Inter, sans-serif' }}>TYPE D'EXERCICES</label>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+                {[
+                  { id: 'varie', label: 'Varié' },
+                  { id: 'qcm', label: 'QCM uniquement' },
+                  { id: 'longs', label: 'Sujets longs' },
+                ].map(t => (
+                  <button key={t.id} onClick={() => setTypeExercices(t.id as any)} style={{
+                    flex: 1, padding: '10px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                    fontWeight: 600, fontSize: 12, fontFamily: 'Inter, sans-serif', transition: 'all 0.2s',
+                    background: typeExercices === t.id ? 'rgba(56,189,248,0.15)' : 'rgba(255,255,255,0.04)',
+                    color: typeExercices === t.id ? '#7dd3fc' : 'rgba(255,255,255,0.4)',
+                    outline: typeExercices === t.id ? '1px solid rgba(56,189,248,0.4)' : '1px solid transparent',
+                  }}>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+
+              <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', display: 'block', marginBottom: 10, fontFamily: 'Inter, sans-serif' }}>UNE DEMANDE PRÉCISE ? (OPTIONNEL)</label>
+              <textarea
+                rows={3}
+                placeholder="Ex : insiste sur les schémas à interpréter, évite les calculs à la calculatrice, concentre-toi sur le vocabulaire..."
+                value={demandeLibre}
+                onChange={e => setDemandeLibre(e.target.value)}
+              />
+            </div>
+          )}
+
           <button onClick={() => checkAccess(genererExercices)} disabled={loading || selected.length === 0} className="btn-primary" style={{
             width: '100%', fontWeight: 700, fontSize: 15,
             padding: '14px', borderRadius: 14, fontFamily: 'Inter, sans-serif',
             opacity: loading || selected.length === 0 ? 0.5 : 1
           }}>
-            {loading ? '🤖 Génération en cours...' : '✨ Générer 5 exercices par IA'}
+            {loading ? '🤖 Génération en cours...' : '✨ Générer les exercices'}
           </button>
 
           {loading && (
@@ -406,10 +454,9 @@ const corrigerReponse = async (ex: any) => {
             ))}
 
             {!valide && (
-              <button onClick={handleValider} disabled={Object.keys(reponses).length < qcmCount} className="btn-primary" style={{
+              <button onClick={handleValider} className="btn-primary" style={{
                 width: '100%', fontWeight: 700, fontSize: 15,
-                padding: '16px', borderRadius: 16, fontFamily: 'Inter, sans-serif',
-                opacity: Object.keys(reponses).length < qcmCount ? 0.5 : 1
+                padding: '16px', borderRadius: 16, fontFamily: 'Inter, sans-serif'
               }}>
                 Valider mes réponses →
               </button>
@@ -418,13 +465,15 @@ const corrigerReponse = async (ex: any) => {
             {valide && (
               <div className="glass" style={{ borderRadius: 20, padding: 28, textAlign: 'center', animation: 'fadeIn 0.5s ease' }}>
                 <p style={{ fontSize: 52, marginBottom: 8 }}>
-                  {score === qcmCount ? '🎉' : score >= 2 ? '💪' : '📚'}
+                  {qcmCount === 0 ? '📝' : score === qcmCount ? '🎉' : score >= 2 ? '💪' : '📚'}
                 </p>
-                <p style={{ color: 'white', fontWeight: 900, fontSize: 36, fontFamily: 'Inter, sans-serif', marginBottom: 6 }}>
-                  {score}/{qcmCount}
-                </p>
+                {qcmCount > 0 && (
+                  <p style={{ color: 'white', fontWeight: 900, fontSize: 36, fontFamily: 'Inter, sans-serif', marginBottom: 6 }}>
+                    {score}/{qcmCount}
+                  </p>
+                )}
                 <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, fontFamily: 'Inter, sans-serif', marginBottom: 20 }}>
-                  {score === qcmCount ? 'Parfait ! Tu maîtrises ces chapitres.' : score >= 2 ? 'Bon travail ! Continue à réviser.' : 'Continue à réviser ces chapitres.'}
+                  {qcmCount === 0 ? 'Bravo, continue comme ça !' : score === qcmCount ? 'Parfait ! Tu maîtrises ces chapitres.' : score >= 2 ? 'Bon travail ! Continue à réviser.' : 'Continue à réviser ces chapitres.'}
                 </p>
                 <button onClick={() => checkAccess(genererExercices)} className="btn-primary" style={{
                   fontWeight: 700, fontSize: 14, padding: '12px 28px', borderRadius: 12,

@@ -291,7 +291,13 @@ export default function Home() {
 
         {!isMobile ? (
           <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                        <Link href="/parents" style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, textDecoration: 'none' }}>Vous êtes parent ?</Link>
+                        <Link href="/parents" style={{
+              color: '#7dd3fc', fontSize: 13, fontWeight: 600, textDecoration: 'none',
+              padding: '8px 14px', borderRadius: 8, border: '1px solid rgba(56,189,248,0.3)',
+              background: 'rgba(56,189,248,0.06)'
+            }}>
+              👪 Vous êtes parent ?
+            </Link>
             <Link href="/connexion" style={{ color: 'rgba(255,255,255,0.65)', fontSize: 14, textDecoration: 'none' }}>Se connecter</Link>
             <MagneticLink href="/inscription" className="btn-primary" style={{ fontSize: 14, fontWeight: 700, padding: '10px 20px', borderRadius: 10, textDecoration: 'none' }}>
               Essai gratuit
@@ -318,6 +324,13 @@ export default function Home() {
             }}>{item}</a>
           ))}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                        <Link href="/parents" onClick={() => setMenuOuvert(false)} style={{
+              color: '#7dd3fc', fontSize: 14, fontWeight: 600, textDecoration: 'none',
+              padding: '10px 14px', borderRadius: 8, border: '1px solid rgba(56,189,248,0.3)',
+              background: 'rgba(56,189,248,0.06)', textAlign: 'center'
+            }}>
+              👪 Vous êtes parent ?
+            </Link>
             <Link href="/connexion" style={{ color: 'rgba(255,255,255,0.65)', fontSize: 14, textDecoration: 'none' }}>Se connecter</Link>
             <Link href="/inscription" className="btn-primary" style={{ textAlign: 'center', fontSize: 14, fontWeight: 700, padding: '12px 20px', borderRadius: 10, textDecoration: 'none' }}>
               Essai gratuit
@@ -986,14 +999,15 @@ export default function Home() {
         </AnimatedSection>
       </div>
 
-      {/* Footer */}
+            {/* Footer */}
       <div style={{ position: 'relative', zIndex: 2, padding: isMobile ? '28px 20px' : '36px 40px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
         <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12 }}>© 2026 Novalys</p>
-        <div style={{ display: 'flex', gap: isMobile ? 14 : 24, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: isMobile ? 14 : 24, flexWrap: 'wrap', alignItems: 'center' }}>
+          <Link href="/parents" style={{ color: '#7dd3fc', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>👪 Espace parents</Link>
           <Link href="/contact" style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12, textDecoration: 'none' }}>Contact</Link>
           <Link href="/mentions-legales" style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12, textDecoration: 'none' }}>Mentions légales</Link>
           <Link href="/cgv" style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12, textDecoration: 'none' }}>CGV</Link>
-          <Link href="/inscription" style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12, textDecoration: 'none' }}>S'inscrire</Link>
+                    <Link href="/inscription" style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12, textDecoration: 'none' }}>S'inscrire</Link>
         </div>
       </div>
     </div>

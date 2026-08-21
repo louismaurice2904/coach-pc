@@ -22,21 +22,25 @@ export default function Profil() {
   const [showConfirmSuppression, setShowConfirmSuppression] = useState(false)
   const [confirmationTexte, setConfirmationTexte] = useState('')
   const [loadingSuppression, setLoadingSuppression] = useState(false)
+  const [emailParent, setEmailParent] = useState('')
+  const [partageActif, setPartageActif] = useState(false)
+  const [loadingPartage, setLoadingPartage] = useState(false)
 
   useEffect(() => {
     const fetchProfil = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/connexion'; return }
       const { data } = await supabase.from('profils').select('*').eq('user_id', user.id).single()
-      if (data) {
+            if (data) {
         setClasse(data.classe || '')
         setObjectif(data.objectif_note?.toString() || '')
         setTemps(data.temps_semaine?.toString() || '')
         setDateBac(data.date_bac || '')
         setPrenom(data.prenom || '')
         setPremium(data.premium || false)
+        setEmailParent(data.email_parent || '')
+        setPartageActif(data.partage_parent_actif || false)
       }
-
       const params = new URLSearchParams(window.location.search)
       if (params.get('paiement') === 'succes') {
         setMessage('✅ Paiement réussi ! Ton compte Premium sera activé dans quelques secondes.')
@@ -87,7 +91,26 @@ export default function Profil() {
     else { setMessage('✅ Profil enregistré !') }
     setLoading(false)
   }
+  const handleSavePartage = async () => {
+    setLoadingPartage(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { setLoadingPartage(false); return }
 
+    if (partageActif && !emailParent) {
+      setMessage('Renseigne un email pour activer le partage.')
+      setLoadingPartage(false)
+      return
+    }
+
+    const { error } = await supabase.from('profils').update({
+      email_parent: emailParent,
+      partage_parent_actif: partageActif,
+    }).eq('user_id', user.id)
+
+    if (error) { setMessage('Erreur : ' + error.message) }
+    else { setMessage('✅ Préférence de partage enregistrée !') }
+    setLoadingPartage(false)
+  }
   const handleSupprimerCompte = async () => {
     if (confirmationTexte !== 'SUPPRIMER') return
     setLoadingSuppression(true)
@@ -203,9 +226,47 @@ export default function Profil() {
             {loading ? 'Enregistrement...' : 'Enregistrer mon profil →'}
           </button>
 
-          {message && <p style={{ marginTop: 16, textAlign: 'center', fontSize: 13, color: message.includes('✅') ? '#86efac' : '#fca5a5' }}>{message}</p>}
+                   {message && <p style={{ marginTop: 16, textAlign: 'center', fontSize: 13, color: message.includes('✅') ? '#86efac' : '#fca5a5' }}>{message}</p>}
 
-          <div style={{ textAlign: 'center', marginTop: 20 }}>
+          <div style={{ marginTop: 28, paddingTop: 24, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', marginBottom: 4 }}>PARTAGE AVEC UN PARENT</p>
+            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12, lineHeight: 1.6, marginBottom: 16 }}>
+              Si tu actives cette option, un résumé hebdomadaire de ton activité sera envoyé chaque semaine à l'adresse indiquée. Tu peux désactiver ça à tout moment.
+            </p>
+
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: 600, display: 'block', marginBottom: 8 }}>EMAIL D'UN PARENT</label>
+              <input type="email" placeholder="parent@email.com" value={emailParent} onChange={e => setEmailParent(e.target.value)} />
+            </div>
+
+            <button onClick={() => setPartageActif(!partageActif)} style={{
+              display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', cursor: 'pointer',
+              padding: 0, marginBottom: 16
+            }}>
+              <div style={{
+                width: 40, height: 22, borderRadius: 99, position: 'relative',
+                background: partageActif ? '#38bdf8' : 'rgba(255,255,255,0.1)', transition: 'background 0.2s'
+              }}>
+                <div style={{
+                  width: 18, height: 18, borderRadius: '50%', background: 'white', position: 'absolute', top: 2,
+                  left: partageActif ? 20 : 2, transition: 'left 0.2s'
+                }} />
+              </div>
+              <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13 }}>
+                {partageActif ? 'Partage activé' : 'Partage désactivé'}
+              </span>
+            </button>
+
+            <button onClick={handleSavePartage} disabled={loadingPartage} style={{
+              width: '100%', padding: '10px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.12)',
+              background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.7)', fontWeight: 600, fontSize: 13,
+              cursor: 'pointer', fontFamily: 'inherit', opacity: loadingPartage ? 0.6 : 1
+            }}>
+              {loadingPartage ? 'Enregistrement...' : 'Enregistrer'}
+            </button>
+          </div>
+
+          <div style={{ textAlign: 'center', marginTop: 20 }}> 
             <Link href="/dashboard" style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13, textDecoration: 'none' }}>
               ← Retour au tableau de bord
             </Link>

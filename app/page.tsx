@@ -815,7 +815,6 @@ export default function Home() {
       </div>
 
       <div className="divider" />
-
       {/* Fonctionnalités */}
       <div id="fonctionnalités" style={{ position: 'relative', zIndex: 2, padding: isMobile ? '60px 20px' : '100px 40px 100px' }}>
         <div style={{ maxWidth: 1000, margin: '0 auto' }}>
@@ -824,37 +823,77 @@ export default function Home() {
             <h2 style={{ fontSize: isMobile ? 26 : 38, fontWeight: 800, color: 'white', textAlign: 'center', marginBottom: 12, letterSpacing: '-1px' }}>
               Tout ce dont tu as besoin.
             </h2>
-            <p style={{ color: 'rgba(255,255,255,0.45)', textAlign: 'center', fontSize: isMobile ? 14 : 16, marginBottom: 40 }}>
-              Un seul outil. Toute ta physique-chimie.
+            <p style={{ color: 'rgba(255,255,255,0.45)', textAlign: 'center', fontSize: isMobile ? 14 : 16, marginBottom: 56 }}>
+              Un seul outil. Toute ta physique-chimie, de la compréhension à la maîtrise.
             </p>
           </AnimatedSection>
 
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 1, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, overflow: 'hidden' }}>
-            {[
-              { title: 'Import multi-format', desc: 'Texte, photo ou PDF — l\'IA extrait et structure automatiquement.' },
-              { title: 'Exercices adaptatifs', desc: 'Format officiel du bac, calibrés à ton niveau exact.' },
-              { title: 'Correction intelligente', desc: 'Commentaire personnalisé sur chaque réponse ouverte.' },
-              { title: 'Contrôle blanc', desc: 'Un sujet complet, format calibré, avec correction détaillée.' },
-              { title: 'Analyse de copie', desc: 'Photographie ta copie corrigée pour des pistes ciblées.' },
-              { title: 'Révision avant DS', desc: 'Un plan jour par jour, généré selon le temps restant.' },
-              { title: 'Mémoire des erreurs', desc: 'Tes erreurs passées refont surface au bon moment.' },
-              { title: 'Suivi de progression', desc: 'Tes forces et lacunes, chapitre par chapitre.' },
-              { title: 'Séries et badges', desc: 'Reste motivé avec un suivi de régularité.' },
-            ].map((f, idx) => (
-              <AnimatedSection key={f.title} delay={idx * 0.03}>
-                <div className="card-hover" style={{ background: '#070b18', padding: 22, height: '100%' }}>
-                  <h3 style={{ color: 'white', fontWeight: 700, fontSize: 14, marginBottom: 8 }}>{f.title}</h3>
-                  <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, lineHeight: 1.7 }}>{f.desc}</p>
-                </div>
+          {[
+            {
+              categorie: 'COMPRENDRE',
+              items: [
+                { title: 'Import multi-format', desc: 'Texte, photo ou PDF — l\'IA extrait et structure automatiquement.' },
+                { title: 'Fiches personnalisables', desc: 'Longueur, densité de formules, tout s\'ajuste à ta façon de réviser.' },
+                { title: 'Explique-moi autrement', desc: 'Une notion pas comprise ? Une nouvelle approche, un nouvel angle.' },
+                { title: 'Chat scopé au cours', desc: 'Un assistant flottant, disponible partout, qui connaît ton cours précis.' },
+              ]
+            },
+            {
+              categorie: "S'ENTRAÎNER",
+              items: [
+                { title: 'Exercices adaptatifs', desc: 'Format officiel du bac, calibrés à ton niveau — QCM, sujets longs, ou varié.' },
+                { title: 'Correction intelligente', desc: 'Commentaire personnalisé sur chaque réponse ouverte, pas juste juste/faux.' },
+                { title: 'Contrôle blanc', desc: 'Un sujet complet, format calibré, avec correction détaillée.' },
+                { title: 'Simulateur jour J', desc: 'Minuterie stricte, conditions réelles d\'examen, pour désensibiliser au stress.' },
+                { title: 'Flashcards', desc: 'Mémorisation rapide façon Quizlet, avec suivi de maîtrise par carte.' },
+                { title: 'Mode Feynman', desc: 'Explique une notion avec tes mots — l\'IA juge la vraie compréhension.' },
+              ]
+            },
+            {
+              categorie: 'SE SUIVRE',
+              items: [
+                { title: 'Mémoire des erreurs', desc: 'Tes erreurs passées refont surface au bon moment pour les corriger.' },
+                { title: 'Suivi de progression', desc: 'Tes forces et lacunes, chapitre par chapitre, basé sur tes vrais résultats.' },
+                { title: 'Planning généré par IA', desc: 'Priorise tes chapitres faibles et tes contrôles à venir, sans que tu y penses.' },
+                { title: 'Debrief hebdomadaire', desc: 'Un vrai résumé de coach chaque semaine, pas juste des chiffres.' },
+              ]
+            },
+            {
+              categorie: 'RESTER MOTIVÉ',
+              items: [
+                { title: 'Séries et badges', desc: 'Un suivi de régularité qui donne envie de revenir chaque jour.' },
+                { title: 'Annales officielles', desc: 'De vrais sujets du bac classés par thème, en complément de l\'IA.' },
+              ]
+            },
+          ].map((section, sectionIdx) => (
+            <div key={section.categorie} style={{ marginBottom: sectionIdx < 3 ? 40 : 0 }}>
+              <AnimatedSection delay={sectionIdx * 0.05}>
+                <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', marginBottom: 14 }}>
+                  {section.categorie}
+                </p>
               </AnimatedSection>
-            ))}
-          </div>
+              <div style={{
+                display: 'grid', gridTemplateColumns: isMobile ? '1fr' : `repeat(${Math.min(section.items.length, 4)}, 1fr)`,
+                gap: 1, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, overflow: 'hidden'
+              }}>
+                {section.items.map((f, idx) => (
+                  <AnimatedSection key={f.title} delay={idx * 0.03}>
+                    <div className="card-hover" style={{ background: '#070b18', padding: 20, height: '100%' }}>
+                      <h3 style={{ color: 'white', fontWeight: 700, fontSize: 13, marginBottom: 8 }}>{f.title}</h3>
+                      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, lineHeight: 1.6 }}>{f.desc}</p>
+                    </div>
+                  </AnimatedSection>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
       <div className="divider" />
+      
 
-      {/* Fondateur */}
+    {/* Fondateur */}
       <div style={{ position: 'relative', zIndex: 2, padding: isMobile ? '60px 20px' : '100px 40px 100px' }}>
         <div style={{ maxWidth: 700, margin: '0 auto' }}>
           <AnimatedSection>

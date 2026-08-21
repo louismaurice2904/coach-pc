@@ -137,8 +137,11 @@ export default function Parents() {
             <h2 style={{ fontSize: isMobile ? 22 : 28, fontWeight: 800, color: 'white', marginBottom: 16, letterSpacing: '-0.5px' }}>
               Un résumé, si votre enfant le souhaite.
             </h2>
-            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, lineHeight: 1.8 }}>
-              Novalys n'espionne personne. Si votre enfant choisit d'activer le partage depuis son propre compte, vous recevez un résumé hebdomadaire de son activité — dans une logique de confiance partagée, pas de contrôle imposé à son insu.
+                       <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, lineHeight: 1.8 }}>
+              Novalys est né d'une frustration très concrète. En Terminale, j'utilisais déjà l'intelligence artificielle pour réviser ma physique-chimie — mais c'était laborieux : aucune mémoire d'une session à l'autre, aucun suivi réel, il fallait tout reconstruire à chaque fois. Je me suis dit qu'il fallait un vrai système qui centralise tout ça, avec une mémoire de progression digne de ce nom.
+            </p>
+            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, lineHeight: 1.8, marginTop: 14 }}>
+              Je suis passé de 13 à 16 en physique-chimie entre le début et la fin de l'année, avec mention très bien au bac — et 20 au grand oral, sur un sujet de physique. Aujourd'hui en classe préparatoire, je continue de croire qu'un cadre clair et un vrai suivi font toute la différence pour un élève qui se sent perdu face à la masse de travail à fournir. C'est exactement ce que Novalys essaie d'apporter.
             </p>
           </div>
           <div className="card" style={{ borderRadius: 16, padding: 24 }}>
@@ -167,7 +170,7 @@ export default function Parents() {
           <div className="card" style={{ borderRadius: 16, padding: isMobile ? 24 : 36 }}>
             <p className="eyebrow" style={{ marginBottom: 16 }}>QUI EST DERRIÈRE NOVALYS</p>
             <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: 16 }}>
-                           <img src="/louis.png" alt="Louis, fondateur de Novalys" style={{
+                           <img src="/louis.png.png" alt="Louis, fondateur de Novalys" style={{
                 width: 52, height: 52, borderRadius: '50%', flexShrink: 0,
                 objectFit: 'cover', border: '1px solid rgba(255,255,255,0.15)'
               }} />

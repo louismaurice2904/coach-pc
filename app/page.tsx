@@ -900,7 +900,7 @@ export default function Home() {
             <div className="card" style={{ borderRadius: 16, padding: isMobile ? 24 : 40 }}>
               <p className="eyebrow" style={{ marginBottom: 16 }}>LE FONDATEUR</p>
               <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', marginBottom: 20, flexWrap: 'wrap' }}>
-                              <img src="/louis.png" alt="Louis, fondateur de Novalys" style={{
+                              <img src="/louis.png.png" alt="Louis, fondateur de Novalys" style={{
                   width: 52, height: 52, borderRadius: '50%', flexShrink: 0,
                   objectFit: 'cover', border: '1px solid rgba(255,255,255,0.15)'
                 }} />
@@ -909,8 +909,8 @@ export default function Home() {
                   <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12 }}>Élève en classe préparatoire</p>
                 </div>
               </div>
-              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: isMobile ? 14 : 15, lineHeight: 1.8, fontStyle: 'italic' }}>
-                « Texte à venir : pourquoi j'ai créé Novalys, mon parcours, et ce que je veux t'apporter. »
+                            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: isMobile ? 14 : 15, lineHeight: 1.8, fontStyle: 'italic' }}>
+                « J'utilisais déjà l'IA pour réviser mon bac, mais c'était long et fastidieux — devoir tout redemander à chaque fois, sans qu'elle se souvienne de rien d'une session à l'autre. Novalys, c'est l'outil que j'aurais aimé avoir : un système qui centralise tout, qui garde une vraie mémoire de ta progression. Je suis passé de 13 à 16 en physique-chimie entre le début et la fin de ma Terminale, avec mention très bien au bac — je sais ce qui manque à un élève qui se sent perdu, et c'est exactement ce que Novalys essaie de combler. »
               </p>
               <div style={{ marginTop: 18, display: 'inline-flex', alignItems: 'center', gap: 8, border: '1px dashed rgba(255,255,255,0.2)', borderRadius: 100, padding: '6px 14px' }}>
                 <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontWeight: 600 }}>Vidéo à venir</span>

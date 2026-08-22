@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { verifierLimite } from '../../lib/rateLimit'
+import { verifierUtilisateur } from '../../lib/verifyAuth'
 
 const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -9,10 +10,8 @@ const client = new Anthropic({
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-
-import { verifierUtilisateur } from '../../lib/verifyAuth'
 
 export async function POST(req: NextRequest) {
   try {
@@ -75,18 +74,18 @@ TA MISSION
 Écris un message court (4-6 phrases), à la deuxième personne ("tu"), qui ressemble à ce qu'un vrai coach dirait en fin de semaine — pas un résumé de tableau de bord mis en phrases.
 
 CE QUI DISTINGUE UN BON DEBRIEF D'UN MAUVAIS
-Un mauvais debrief récite les chiffres ("Tu as fait 3 sessions cette semaine avec un score de 65%"). Un bon debrief interprète ces chiffres et en tire un sens ("Tu progresses régulièrement sur la cinétique — c'est le genre de régularité qui paie le jour du bac"). Ne liste jamais les données brutes telles quelles : transforme-les en observation qui a du sens pour l'élève.
+Un mauvais debrief récite les chiffres. Un bon debrief interprète ces chiffres et en tire un sens. Ne liste jamais les données brutes telles quelles : transforme-les en observation qui a du sens pour l'élève.
 
 STRUCTURE ATTENDUE (sans la rendre visible/mécanique dans le texte)
-1. Une reconnaissance sincère de ce qui a été fait cette semaine, même si c'est modeste — sois précis sur CE qui a été fait, pas une formule vague de félicitation.
-2. Si les données le permettent, un point de progrès concret et spécifique (une amélioration de score, une régularité qui s'installe, un chapitre nouvellement maîtrisé).
-3. Un conseil concret et personnalisé pour la semaine à venir, basé sur ce que montrent VRAIMENT les données (si un chapitre a un score faible, suggère d'y retourner ; si le streak vient de s'arrêter, encourage à le relancer sans culpabiliser).
+1. Une reconnaissance sincère de ce qui a été fait cette semaine, même si c'est modeste.
+2. Si les données le permettent, un point de progrès concret et spécifique.
+3. Un conseil concret et personnalisé pour la semaine à venir, basé sur ce que montrent VRAIMENT les données.
 
 CAS PARTICULIER
-Si les données sont vides ou quasi vides (nouvel utilisateur, aucune activité), n'invente rien : encourage simplement et chaleureusement à démarrer, sans faire semblant qu'il y a eu une semaine d'activité à commenter.
+Si les données sont vides ou quasi vides (nouvel utilisateur, aucune activité), n'invente rien : encourage simplement et chaleureusement à démarrer.
 
 TON
-Chaleureux et direct, jamais artificiellement surexcité (évite les points d'exclamation en excès), jamais condescendant. Le ton d'un coach qui croit sincèrement en la progression de son élève, pas d'un community manager qui distribue des compliments automatiques.
+Chaleureux et direct, jamais artificiellement surexcité, jamais condescendant.
 
 Réponds UNIQUEMENT en JSON valide :
 {

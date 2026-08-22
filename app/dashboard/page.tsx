@@ -116,19 +116,14 @@ export default function Dashboard() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/connexion'; return }
 
-            let { data: p } = await supabase.from('profils').select('*').eq('user_id', user.id).single()
+             const { data: p } = await supabase.from('profils').select('*').eq('user_id', user.id).single()
 
-      if (!p) {
-        const finEssai = new Date()
-        finEssai.setDate(finEssai.getDate() + 7)
-        const { data: nouveauProfil } = await supabase.from('profils').insert({
-          user_id: user.id,
-          premium: true,
-          essai_premium_fin: finEssai.toISOString(),
-          essai_utilise: true,
-        }).select().single()
-        p = nouveauProfil
+      if (!p || !p.prenom || !p.classe) {
+        window.location.href = '/bienvenue'
+        return
       }
+
+      const { data: c } = await supabase.from('cours').select('*').eq('user_id', user.id)
 
       const { data: c } = await supabase.from('cours').select('*').eq('user_id', user.id)
       if (p?.essai_premium_fin && !p?.abonnement_paye) {

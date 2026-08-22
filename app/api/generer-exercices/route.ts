@@ -66,7 +66,24 @@ PRÉFÉRENCE DE FORMAT DE L'ÉLÈVE
 ${typeExercicesTexte}${demandeLibreTexte}
 
 CALIBRATION DE LA DIFFICULTÉ — RÈGLE ABSOLUE
-La difficulté demandée (${niveau || 'intermédiaire'}) s'applique STRICTEMENT à l'intérieur de ce qui est attendu pour un élève de ${niveauScolaire || 'Terminale'} — jamais au-delà. Un exercice "difficile" pour un élève de Seconde doit rester un exercice de Seconde exigeant, PAS un exercice de niveau Première ou Terminale déguisé. N'introduis jamais une notion, une formule ou un formalisme mathématique qui ne serait normalement enseigné qu'à un niveau supérieur, même si cela semblerait "plus rigoureux" — la difficulté vient de la profondeur du raisonnement demandé sur le programme du niveau réel, jamais de l'ajout de contenu hors-programme.
+La difficulté demandée (${niveau || 'intermédiaire'}) s'applique STRICTEMENT à l'intérieur de ce qui est attendu pour un élève de ${niveauScolaire || 'Terminale'} — jamais au-delà. Un exercice "difficile" pour un élève de Première doit rester un exercice de Première exigeant, PAS un exercice de niveau Terminale déguisé.
+
+Définition de la difficulté À L'INTÉRIEUR du niveau réel :
+— facile : application directe d'une formule ou définition du cours, une seule étape.
+— intermédiaire : combine 2 informations du cours, ou question de compréhension au-delà de la restitution pure.
+— difficile : raisonnement en plusieurs étapes DANS LE CADRE du programme de ${niveauScolaire || 'Terminale'}, ou question qui demande d'identifier soi-même la bonne méthode parmi celles du niveau.
+
+COMMENT UTILISER LE COURS FOURNI — LA RÈGLE LA PLUS IMPORTANTE
+Le cours ci-dessous n'est pas juste un texte à citer littéralement — c'est la preuve du niveau réel exact de ce sujet pour cet élève précis. Utilise-la ainsi :
+— Tu PEUX et DOIS enrichir la formulation des exercices : varier les contextes, ajouter des exemples concrets, changer les valeurs numériques, formuler différemment — un exercice généré ne doit jamais ressembler à une simple copie du cours.
+— Tu PEUX mobiliser des notions qui appartiennent clairement au MÊME niveau que celui du cours, même si elles ne sont pas mot pour mot écrites dedans, tant qu'elles font partie du programme officiel de ${niveauScolaire || 'Terminale'} sur ce sujet précis.
+— Tu NE DOIS JAMAIS introduire une notion, une formule, un vocabulaire ou un formalisme qui appartient à un niveau SUPÉRIEUR à celui de l'élève, même si cette notion est thématiquement proche ou "vient naturellement après" dans une progression logique du sujet. Avant chaque exercice, vérifie : "cette notion précise fait-elle partie du programme de ${niveauScolaire || 'Terminale'}, ou est-ce que je la connais seulement parce qu'elle existe dans un niveau plus avancé sur ce même thème ?" Si c'est la deuxième option, ne l'utilise pas.
+— En cas de doute sur si une notion appartient au bon niveau, reste sur ce qui est explicitement couvert par le cours fourni plutôt que de prendre le risque de dépasser le niveau.
+
+RÈGLES IMPÉRATIVES
+— Les exercices doivent couvrir des aspects DIFFÉRENTS du sujet, pas la même notion reformulée cinq fois.
+— Formules et notations chimiques exclusivement en texte brut, jamais de LaTeX.
+— Ton neutre et factuel dans les énoncés, comme un vrai sujet d'examen.
 
 Définition de la difficulté À L'INTÉRIEUR du niveau réel :
 — facile : application directe d'une formule ou définition du cours, une seule étape.

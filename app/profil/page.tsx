@@ -213,10 +213,12 @@ export default function Profil() {
               <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 8 }}>TEMPS DE TRAVAIL / SEMAINE (H)</label>
               <input type="number" min="1" placeholder="Ex : 5" value={temps} onChange={e => setTemps(e.target.value)} />
             </div>
-            <div>
-              <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 8 }}>DATE DU BAC</label>
-              <input type="date" value={dateBac} onChange={e => setDateBac(e.target.value)} />
-            </div>
+                        {classe === 'Terminale' && (
+              <div>
+                <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 8 }}>DATE DU BAC</label>
+                <input type="date" value={dateBac} onChange={e => setDateBac(e.target.value)} />
+              </div>
+            )}
           </div>
 
           <button onClick={handleSave} disabled={loading} className="btn-primary" style={{

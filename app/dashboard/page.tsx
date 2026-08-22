@@ -318,7 +318,7 @@ export default function Dashboard() {
                 {profil ? `${profil.classe} · Objectif ${profil.objectif_note}/20` : ''}
               </p>
             </div>
-            {joursRestants !== null && (
+                       {joursRestants !== null && profil?.classe === 'Terminale' && (
               <div style={{ textAlign: 'right' }}>
                 <p style={{ fontSize: 22, fontWeight: 900, color: joursRestants < 30 ? '#fca5a5' : 'white', lineHeight: 1 }}>{joursRestants}</p>
                 <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>jours avant le bac</p>

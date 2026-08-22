@@ -123,7 +123,6 @@ export default function Dashboard() {
         return
       }
 
-      const { data: c } = await supabase.from('cours').select('*').eq('user_id', user.id)
 
       const { data: c } = await supabase.from('cours').select('*').eq('user_id', user.id)
       if (p?.essai_premium_fin && !p?.abonnement_paye) {

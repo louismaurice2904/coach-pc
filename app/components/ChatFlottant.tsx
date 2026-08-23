@@ -23,6 +23,15 @@ export default function ChatFlottant() {
   const [userId, setUserId] = useState<string | null>(null)
   const [niveauScolaire, setNiveauScolaire] = useState('Terminale')
   const messagesEndRef = useRef<HTMLDivElement>(null)
+    const formaterMessage = (texte: string) => {
+    const parties = texte.split(/(\*\*.*?\*\*)/g)
+    return parties.map((partie, i) => {
+      if (partie.startsWith('**') && partie.endsWith('**')) {
+        return <strong key={i}>{partie.slice(2, -2)}</strong>
+      }
+      return <span key={i}>{partie}</span>
+    })
+  }
 
   const isAuthPage = pathname === '/' || pathname === '/connexion' || pathname === '/inscription' || pathname === '/parents'
 
@@ -195,7 +204,8 @@ export default function ChatFlottant() {
                     lineHeight: 1.6,
                     fontFamily: 'Inter, sans-serif'
                   }}>
-                    {m.contenu}
+                  {formaterMessage(m.contenu)}
+
                   </div>
                 ))}
                 {loading && (

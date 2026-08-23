@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { FeaturePreview } from './components/FeaturePreview'
 import { useEffect, useRef, useState } from 'react'
 
 function useInView(threshold = 0.15) {
@@ -196,6 +197,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<'fiche' | 'exercice' | 'planning' | 'controle'>('fiche')
   const [menuOuvert, setMenuOuvert] = useState(false)
   const isMobile = useIsMobile()
+    const [previewOuvert, setPreviewOuvert] = useState<string | null>(null)
 
   useEffect(() => {
     const handle = () => setScrollY(window.scrollY)
@@ -487,12 +489,12 @@ export default function Home() {
             {
               categorie: "S'ENTRAÎNER",
               items: [
-                { title: 'Exercices personnalisables', desc: 'QCM, sujets longs ou varié — format officiel, calibré à ton niveau exact.' },
-                { title: 'Correction intelligente', desc: 'Commentaire personnalisé sur chaque réponse ouverte, pas juste juste/faux.' },
+                                { title: 'Exercices personnalisables', preview: 'exercices', desc: 'QCM, sujets longs ou varié — format officiel, calibré à ton niveau exact.' },
+                { title: 'Correction intelligente', preview: 'correction', desc: 'Commentaire personnalisé sur chaque réponse ouverte, pas juste juste/faux.' },
                 { title: 'Contrôle blanc', desc: 'Un sujet complet, format calibré, avec correction détaillée.' },
                 { title: 'Simulateur jour J', desc: 'Minuterie stricte, conditions réelles d\'examen, pour désensibiliser au stress.' },
-                { title: 'Flashcards', desc: 'Mémorisation rapide façon Quizlet, avec suivi de maîtrise par carte.' },
-                { title: 'Mode Feynman', badge: '🎙️ Nouveau', desc: 'Explique une notion à voix haute ou à l\'écrit — l\'IA juge la vraie compréhension.' },
+                                { title: 'Flashcards', preview: 'flashcards', desc: 'Mémorisation rapide façon Quizlet, avec suivi de maîtrise par carte.' },
+                { title: 'Mode Feynman', preview: 'feynman', badge: '🎙️ Nouveau', desc: 'Explique une notion à voix haute ou à l\'écrit — l\'IA juge la vraie compréhension.' },
               ]
             },
             {
@@ -501,7 +503,7 @@ export default function Home() {
                 { title: 'Analyse de copie', desc: 'Photographie ta copie corrigée par le prof pour des pistes personnalisées.' },
                 { title: 'Mémoire des erreurs', desc: 'Tes erreurs passées refont surface au bon moment pour les corriger.' },
                 { title: 'Suivi de progression', desc: 'Tes forces et lacunes, chapitre par chapitre, basé sur tes vrais résultats.' },
-                { title: 'Planning généré par IA', desc: 'Priorise tes chapitres faibles et tes contrôles à venir, sans que tu y penses.' },
+                                { title: 'Planning généré par IA', preview: 'planning', desc: 'Priorise tes chapitres faibles et tes contrôles à venir, sans que tu y penses.' },
                 { title: 'Debrief hebdomadaire', desc: 'Un vrai résumé de coach chaque semaine, pas juste des chiffres.' },
               ]
             },
@@ -526,9 +528,13 @@ export default function Home() {
                 display: 'grid', gridTemplateColumns: isMobile ? '1fr' : `repeat(${Math.min(section.items.length, 4)}, 1fr)`,
                 gap: 1, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, overflow: 'hidden'
               }}>
-                {section.items.map((f: any, idx) => (
+                                {section.items.map((f: any, idx) => (
                   <AnimatedSection key={f.title} delay={idx * 0.03}>
-                    <div className="card-hover" style={{ background: '#070b18', padding: 20, height: '100%' }}>
+                    <div
+                      className="card-hover"
+                      onClick={() => f.preview && setPreviewOuvert(f.preview)}
+                      style={{ background: '#070b18', padding: 20, height: '100%', cursor: f.preview ? 'pointer' : 'default' }}
+                    >
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
                         <h3 style={{ color: 'white', fontWeight: 700, fontSize: 13 }}>{f.title}</h3>
                         {f.badge && (
@@ -538,7 +544,9 @@ export default function Home() {
                         )}
                       </div>
                       <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, lineHeight: 1.6 }}>{f.desc}</p>
-                    </div>
+                      {f.preview && (
+                        <p style={{ color: '#38bdf8', fontSize: 11, fontWeight: 600, marginTop: 8 }}>Voir un aperçu →</p>
+                      )}                    </div>
                   </AnimatedSection>
                 ))}
               </div>
@@ -1055,6 +1063,151 @@ export default function Home() {
           <Link href="/cgv" style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12, textDecoration: 'none' }}>CGV</Link>
           <Link href="/inscription" style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12, textDecoration: 'none' }}>S'inscrire</Link>
         </div>
+      </div>
+            <FeaturePreview ouvert={previewOuvert === 'feynman'} onClose={() => setPreviewOuvert(null)} titre="Mode Feynman">
+        <PreviewFeynman />
+      </FeaturePreview>
+      <FeaturePreview ouvert={previewOuvert === 'flashcards'} onClose={() => setPreviewOuvert(null)} titre="Flashcards">
+        <PreviewFlashcards />
+      </FeaturePreview>
+      <FeaturePreview ouvert={previewOuvert === 'planning'} onClose={() => setPreviewOuvert(null)} titre="Planning généré par IA">
+        <PreviewPlanning />
+      </FeaturePreview>
+      <FeaturePreview ouvert={previewOuvert === 'exercices'} onClose={() => setPreviewOuvert(null)} titre="Exercices personnalisables">
+        <PreviewExercices />
+      </FeaturePreview>
+      <FeaturePreview ouvert={previewOuvert === 'correction'} onClose={() => setPreviewOuvert(null)} titre="Correction intelligente">
+        <PreviewCorrection />
+      </FeaturePreview>
+      
+    </div>
+  )
+}
+function PreviewFeynman() {
+  return (
+    <div>
+      <p style={{ color: '#7dd3fc', fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', marginBottom: 10, fontFamily: 'Inter, sans-serif' }}>EXPLIQUE COMME À UN DÉBUTANT</p>
+      <p style={{ color: 'white', fontWeight: 800, fontSize: 16, marginBottom: 18, fontFamily: 'Inter, sans-serif' }}>Pourquoi la vitesse de réaction dépend-elle de la température ?</p>
+      <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 16, marginBottom: 14 }}>
+        <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 13, lineHeight: 1.7, fontFamily: 'Inter, sans-serif' }}>
+          "Ben en fait, quand ça chauffe, les molécules bougent plus vite donc elles se rentrent plus souvent dedans et ça réagit plus..."
+        </p>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 18 }}>
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 18px', borderRadius: 10,
+          background: 'rgba(239,68,68,0.15)', color: '#fca5a5', fontWeight: 700, fontSize: 13, fontFamily: 'Inter, sans-serif'
+        }}>
+          ⏹️ Enregistrement en cours...
+        </div>
+      </div>
+      <div style={{ background: 'rgba(56,189,248,0.06)', border: '1px solid rgba(56,189,248,0.2)', borderRadius: 12, padding: 14 }}>
+        <div style={{ display: 'flex', gap: 4, marginBottom: 10 }}>
+          {[1, 2, 3, 4].map(n => (
+            <div key={n} style={{ width: 24, height: 24, borderRadius: 6, background: '#38bdf8', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#070b18', fontWeight: 800, fontSize: 11 }}>{n}</div>
+          ))}
+          <div style={{ width: 24, height: 24, borderRadius: 6, background: 'rgba(255,255,255,0.08)' }} />
+        </div>
+        <p style={{ color: '#7dd3fc', fontSize: 11, fontWeight: 700, marginBottom: 4, fontFamily: 'Inter, sans-serif' }}>💡 IA</p>
+        <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, lineHeight: 1.6, fontFamily: 'Inter, sans-serif' }}>Bonne intuition sur le mouvement, mais tu peux préciser le terme exact : "agitation thermique" plutôt que "ça bouge plus vite".</p>
+      </div>
+    </div>
+  )
+}
+
+function PreviewFlashcards() {
+  return (
+    <div>
+      <div style={{
+        borderRadius: 20, padding: 32, minHeight: 160, display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center', textAlign: 'center',
+        background: 'linear-gradient(135deg, rgba(56,189,248,0.1), rgba(255,255,255,0.02))',
+        border: '1px solid rgba(56,189,248,0.25)', marginBottom: 16
+      }}>
+        <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', marginBottom: 14, fontFamily: 'Inter, sans-serif' }}>RECTO</p>
+        <p style={{ color: 'white', fontWeight: 700, fontSize: 18, fontFamily: 'Inter, sans-serif' }}>Formule de la vitesse de réaction</p>
+      </div>
+      <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+        <div style={{ flex: 1, textAlign: 'center', padding: '12px', borderRadius: 12, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', color: '#fca5a5', fontWeight: 700, fontSize: 13, fontFamily: 'Inter, sans-serif' }}>✗ Pas su</div>
+        <div style={{ flex: 1, textAlign: 'center', padding: '12px', borderRadius: 12, background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)', color: '#86efac', fontWeight: 700, fontSize: 13, fontFamily: 'Inter, sans-serif' }}>✓ Su</div>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12, fontFamily: 'Inter, sans-serif' }}>Carte 3 / 12</span>
+        <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 99, height: 4, flex: 1, marginLeft: 12 }}>
+          <div style={{ width: '25%', height: 4, borderRadius: 99, background: '#38bdf8' }} />
+        </div>
+      </div>
+    </div>
+  )
+}
+function PreviewPlanning() {
+  const jours = [
+    { jour: 'Lundi', tache: 'Exercices difficiles — Cinétique chimique', duree: '30 min', type: '🔴' },
+    { jour: 'Mardi', tache: 'Flashcards — Cinétique chimique', duree: '15 min', type: '🗂️' },
+    { jour: 'Mercredi', tache: 'Fiche — Équilibres acido-basiques', duree: '25 min', type: '📋' },
+    { jour: 'Jeudi', tache: 'Exercices faciles — Équilibres', duree: '20 min', type: '🟢' },
+  ]
+  return (
+    <div>
+      <div style={{ borderRadius: 14, padding: 16, marginBottom: 16, background: 'rgba(56,189,248,0.06)', border: '1px solid rgba(56,189,248,0.2)' }}>
+        <p style={{ color: '#7dd3fc', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', marginBottom: 6, fontFamily: 'Inter, sans-serif' }}>NOTE DE TON COACH</p>
+        <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, lineHeight: 1.6, fontFamily: 'Inter, sans-serif' }}>Ton contrôle sur la cinétique approche — cette semaine on s'y concentre en priorité.</p>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {jours.map(j => (
+          <div key={j.jour} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <span style={{ color: '#38bdf8', fontSize: 11, fontWeight: 700, width: 56, flexShrink: 0, fontFamily: 'Inter, sans-serif' }}>{j.jour}</span>
+            <span style={{ fontSize: 14 }}>{j.type}</span>
+            <span style={{ flex: 1, color: 'rgba(255,255,255,0.7)', fontSize: 12, fontFamily: 'Inter, sans-serif' }}>{j.tache}</span>
+            <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, fontFamily: 'Inter, sans-serif' }}>{j.duree}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function PreviewExercices() {
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        {['Varié', 'QCM uniquement', 'Sujets longs'].map((t, i) => (
+          <div key={t} style={{
+            flex: 1, textAlign: 'center', padding: '9px', borderRadius: 10, fontSize: 11, fontWeight: 700, fontFamily: 'Inter, sans-serif',
+            background: i === 1 ? 'rgba(56,189,248,0.15)' : 'rgba(255,255,255,0.04)',
+            color: i === 1 ? '#7dd3fc' : 'rgba(255,255,255,0.4)'
+          }}>{t}</div>
+        ))}
+      </div>
+      <p style={{ color: 'white', fontWeight: 700, fontSize: 14, marginBottom: 14, lineHeight: 1.6, fontFamily: 'Inter, sans-serif' }}>Quel facteur n'influence pas la vitesse de réaction ?</p>
+      {[{ t: 'La température', c: false }, { t: 'La couleur du récipient', c: true }, { t: 'La concentration', c: false }].map((opt, i) => (
+        <div key={i} style={{
+          padding: '11px 14px', borderRadius: 10, marginBottom: 7, fontSize: 12, fontFamily: 'Inter, sans-serif',
+          background: opt.c ? 'rgba(56,189,248,0.1)' : 'rgba(255,255,255,0.03)',
+          border: opt.c ? '1px solid rgba(56,189,248,0.35)' : '1px solid rgba(255,255,255,0.06)',
+          color: opt.c ? '#7dd3fc' : 'rgba(255,255,255,0.55)'
+        }}>
+          {['A', 'B', 'C'][i]}. {opt.t} {opt.c && '✓'}
+        </div>
+      ))}
+      <div style={{ marginTop: 12, padding: '10px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.1)' }}>
+        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, fontFamily: 'Inter, sans-serif' }}>💬 "Insiste sur les schémas à interpréter" — demande libre prise en compte</p>
+      </div>
+    </div>
+  )
+}
+
+function PreviewCorrection() {
+  return (
+    <div>
+      <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 14, marginBottom: 14 }}>
+        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: 700, marginBottom: 6, fontFamily: 'Inter, sans-serif' }}>TA RÉPONSE</p>
+        <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, lineHeight: 1.6, fontFamily: 'Inter, sans-serif' }}>"La vitesse augmente parce que les molécules ont plus d'énergie avec la chaleur."</p>
+      </div>
+      <div style={{ borderRadius: 12, padding: 16, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)' }}>
+        <p style={{ color: '#fcd34d', fontSize: 12, fontWeight: 700, marginBottom: 8, fontFamily: 'Inter, sans-serif' }}>⚡ Partiellement correct</p>
+        <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, lineHeight: 1.6, marginBottom: 8, fontFamily: 'Inter, sans-serif' }}>Bonne intuition sur l'énergie, mais il manque le terme précis : "agitation thermique" et la notion de "chocs efficaces" entre les molécules.</p>
+        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, lineHeight: 1.6, fontFamily: 'Inter, sans-serif' }}>💡 Revois le vocabulaire précis de la théorie des collisions dans ta fiche.</p>
       </div>
     </div>
   )

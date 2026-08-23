@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
 
     const message = await client.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 4000,
+      max_tokens: 6000,
       messages: [
         {
           role: 'user',
@@ -89,9 +89,14 @@ ${contenuCombine}`
 
     const raw = message.content[0].type === 'text' ? message.content[0].text : ''
     const clean = raw.replace(/```json|```/g, '').trim()
-    const parsed = JSON.parse(clean)
-    return NextResponse.json(parsed)
 
+    try {
+      const parsed = JSON.parse(clean)
+      return NextResponse.json(parsed)
+    } catch (parseError) {
+      console.error('Erreur de parsing JSON:', parseError)
+      return NextResponse.json({ error: 'Le sujet généré était incomplet, réessaie.' }, { status: 500 })
+    }
   } catch (error: any) {
     console.error('Erreur:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })

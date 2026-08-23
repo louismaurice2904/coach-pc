@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
-import { verifierLimite } from '../../lib/rateLimit'
+import { verifierLimiteQuotidienne } from '../../lib/rateLimit'
 import { verifierUtilisateur } from '../../lib/verifyAuth'
 import { verifierPremium } from '../../lib/verifyPremium'
 
@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Cette fonctionnalité est réservée aux membres Premium.' }, { status: 403 })
     }
 
-    const limite = await verifierLimite(userId, 'chat-cours')
+    const limite = await verifierLimiteQuotidienne(userId, 'chat-cours')
     if (!limite.autorise) {
       return NextResponse.json({ error: limite.message }, { status: 429 })
     }

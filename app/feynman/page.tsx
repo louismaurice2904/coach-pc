@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { useToast } from '../components/Toast'
 import { usePremiumCheck } from '../components/PremiumGate'
+import { VoiceInput } from '../components/VoiceInput'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -37,7 +38,7 @@ export default function Feynman() {
     init()
   }, [])
 
-    const chargerNotions = async (c: any) => {
+  const chargerNotions = async (c: any) => {
     setSelected(c)
     setNotionActuelle(null)
     setEvaluation(null)
@@ -65,7 +66,7 @@ export default function Feynman() {
     setLoading(false)
   }
 
-    const evaluerExplication = async () => {
+  const evaluerExplication = async () => {
     if (!explication.trim() || explication.length < 20) {
       toast('Explique un peu plus en détail (au moins quelques phrases)', 'error')
       return
@@ -210,11 +211,14 @@ export default function Feynman() {
               <h2 style={{ color: 'white', fontWeight: 800, fontSize: 20, marginBottom: 20, lineHeight: 1.4 }}>{notionActuelle}</h2>
               <textarea
                 rows={8}
-                placeholder="Écris ton explication ici, avec tes propres mots, comme si tu parlais à quelqu'un qui ne connaît rien au sujet..."
+                placeholder="Écris ton explication ici, ou dicte-la à voix haute avec le micro ci-dessous..."
                 value={explication}
                 onChange={e => setExplication(e.target.value)}
               />
-              <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12, marginTop: 8, fontFamily: 'Inter, sans-serif' }}>{explication.length} caractères</p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
+                <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12, fontFamily: 'Inter, sans-serif' }}>{explication.length} caractères</p>
+                <VoiceInput onResult={(texte) => setExplication(texte)} />
+              </div>
               <button onClick={evaluerExplication} disabled={loadingEval} className="btn-primary" style={{
                 width: '100%', fontWeight: 700, fontSize: 15, padding: '14px', borderRadius: 14, marginTop: 16,
                 opacity: loadingEval ? 0.6 : 1, fontFamily: 'Inter, sans-serif'

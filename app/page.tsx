@@ -459,6 +459,96 @@ export default function Home() {
         {!isMobile && <div className="scroll-hint" style={{ textAlign: 'center', marginTop: 48, color: 'rgba(255,255,255,0.2)', fontSize: 20 }}>↓</div>}
       </div>
 
+      <div className="divider" />
+
+      {/* Fonctionnalités */}
+      <div id="fonctionnalités" style={{ position: 'relative', zIndex: 2, padding: isMobile ? '60px 20px' : '100px 40px 100px' }}>
+        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
+          <AnimatedSection>
+            <p className="eyebrow" style={{ textAlign: 'center', marginBottom: 16 }}>LES OUTILS</p>
+            <h2 style={{ fontSize: isMobile ? 26 : 38, fontWeight: 800, color: 'white', textAlign: 'center', marginBottom: 12, letterSpacing: '-1px' }}>
+              <CountUp end={17} suffix=" outils." /> Un seul objectif.
+            </h2>
+            <p style={{ color: 'rgba(255,255,255,0.45)', textAlign: 'center', fontSize: isMobile ? 14 : 16, marginBottom: 56 }}>
+              Toute ta physique-chimie, de la compréhension à la maîtrise, dans un seul endroit.
+            </p>
+          </AnimatedSection>
+
+          {[
+            {
+              categorie: 'COMPRENDRE',
+              items: [
+                { title: 'Import multi-format', desc: 'Texte, photo ou PDF — l\'IA extrait et structure automatiquement.' },
+                { title: 'Fiches personnalisables', desc: 'Longueur, densité de formules, tout s\'ajuste à ta façon de réviser.' },
+                { title: 'Explique-moi autrement', desc: 'Une notion pas comprise ? Une nouvelle approche, un nouvel angle.' },
+                { title: 'Chat scopé au cours', desc: 'Un assistant flottant, disponible partout, qui connaît ton cours précis.' },
+              ]
+            },
+            {
+              categorie: "S'ENTRAÎNER",
+              items: [
+                { title: 'Exercices personnalisables', desc: 'QCM, sujets longs ou varié — format officiel, calibré à ton niveau exact.' },
+                { title: 'Correction intelligente', desc: 'Commentaire personnalisé sur chaque réponse ouverte, pas juste juste/faux.' },
+                { title: 'Contrôle blanc', desc: 'Un sujet complet, format calibré, avec correction détaillée.' },
+                { title: 'Simulateur jour J', desc: 'Minuterie stricte, conditions réelles d\'examen, pour désensibiliser au stress.' },
+                { title: 'Flashcards', desc: 'Mémorisation rapide façon Quizlet, avec suivi de maîtrise par carte.' },
+                { title: 'Mode Feynman', badge: '🎙️ Nouveau', desc: 'Explique une notion à voix haute ou à l\'écrit — l\'IA juge la vraie compréhension.' },
+              ]
+            },
+            {
+              categorie: 'SE SUIVRE',
+              items: [
+                { title: 'Analyse de copie', desc: 'Photographie ta copie corrigée par le prof pour des pistes personnalisées.' },
+                { title: 'Mémoire des erreurs', desc: 'Tes erreurs passées refont surface au bon moment pour les corriger.' },
+                { title: 'Suivi de progression', desc: 'Tes forces et lacunes, chapitre par chapitre, basé sur tes vrais résultats.' },
+                { title: 'Planning généré par IA', desc: 'Priorise tes chapitres faibles et tes contrôles à venir, sans que tu y penses.' },
+                { title: 'Debrief hebdomadaire', desc: 'Un vrai résumé de coach chaque semaine, pas juste des chiffres.' },
+              ]
+            },
+            {
+              categorie: 'RESTER MOTIVÉ',
+              items: [
+                { title: 'Séries et badges', desc: 'Un suivi de régularité qui donne envie de revenir chaque jour.' },
+                { title: 'Annales officielles', desc: 'De vrais sujets du bac classés par thème, en complément de l\'IA.' },
+              ]
+            },
+          ].map((section, sectionIdx) => (
+            <div key={section.categorie} style={{ marginBottom: sectionIdx < 3 ? 44 : 0 }}>
+              <AnimatedSection delay={sectionIdx * 0.05}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                  <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em' }}>
+                    {section.categorie}
+                  </p>
+                  <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 11 }}>· {section.items.length} outil{section.items.length > 1 ? 's' : ''}</span>
+                </div>
+              </AnimatedSection>
+              <div style={{
+                display: 'grid', gridTemplateColumns: isMobile ? '1fr' : `repeat(${Math.min(section.items.length, 4)}, 1fr)`,
+                gap: 1, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, overflow: 'hidden'
+              }}>
+                {section.items.map((f: any, idx) => (
+                  <AnimatedSection key={f.title} delay={idx * 0.03}>
+                    <div className="card-hover" style={{ background: '#070b18', padding: 20, height: '100%' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+                        <h3 style={{ color: 'white', fontWeight: 700, fontSize: 13 }}>{f.title}</h3>
+                        {f.badge && (
+                          <span style={{ fontSize: 9, fontWeight: 700, color: '#7dd3fc', background: 'rgba(56,189,248,0.12)', padding: '2px 7px', borderRadius: 100 }}>
+                            {f.badge}
+                          </span>
+                        )}
+                      </div>
+                      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, lineHeight: 1.6 }}>{f.desc}</p>
+                    </div>
+                  </AnimatedSection>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="divider" />
+
       {/* Problème */}
       <div style={{ position: 'relative', zIndex: 2, padding: isMobile ? '10px 20px 60px' : '30px 40px 100px' }}>
         <div style={{ maxWidth: 760, margin: '0 auto', textAlign: 'center' }}>
@@ -568,7 +658,7 @@ export default function Home() {
             {[
               { num: '01', titre: 'Importe ton cours.', desc: 'Colle ton cours, prends une photo, ou upload un PDF. Novalys lit et comprend le contenu instantanément.' },
               { num: '02', titre: 'Reçois ta fiche.', desc: 'Une fiche de révision claire et structurée : points clés, formules, définitions, méthode.' },
-              { num: '03', titre: "T'entraîne avec des exercices.", desc: 'Des exercices au format officiel du bac, calibrés à ton niveau exact, avec correction immédiate.' },
+              { num: '03', titre: "entraîne-toi avec des exercices personnalisés.", desc: 'Des exercices au format officiel du bac, calibrés à ton niveau exact, avec correction immédiate.' },
               { num: '04', titre: 'Suis ta progression.', desc: 'Visualise tes points forts et lacunes, chapitre par chapitre, et sache où concentrer tes efforts.' },
             ].map((step, i) => (
               <AnimatedSection key={step.num} delay={i * 0.08}>
@@ -817,94 +907,6 @@ export default function Home() {
 
       <div className="divider" />
 
-      {/* Fonctionnalités */}
-      <div id="fonctionnalités" style={{ position: 'relative', zIndex: 2, padding: isMobile ? '60px 20px' : '100px 40px 100px' }}>
-        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
-          <AnimatedSection>
-            <p className="eyebrow" style={{ textAlign: 'center', marginBottom: 16 }}>LES OUTILS</p>
-            <h2 style={{ fontSize: isMobile ? 26 : 38, fontWeight: 800, color: 'white', textAlign: 'center', marginBottom: 12, letterSpacing: '-1px' }}>
-              <CountUp end={17} suffix=" outils." /> Un seul objectif.
-            </h2>
-            <p style={{ color: 'rgba(255,255,255,0.45)', textAlign: 'center', fontSize: isMobile ? 14 : 16, marginBottom: 56 }}>
-              Toute ta physique-chimie, de la compréhension à la maîtrise, dans un seul endroit.
-            </p>
-          </AnimatedSection>
-
-          {[
-            {
-              categorie: 'COMPRENDRE',
-              items: [
-                { title: 'Import multi-format', desc: 'Texte, photo ou PDF — l\'IA extrait et structure automatiquement.' },
-                { title: 'Fiches personnalisables', desc: 'Longueur, densité de formules, tout s\'ajuste à ta façon de réviser.' },
-                { title: 'Explique-moi autrement', desc: 'Une notion pas comprise ? Une nouvelle approche, un nouvel angle.' },
-                { title: 'Chat scopé au cours', desc: 'Un assistant flottant, disponible partout, qui connaît ton cours précis.' },
-              ]
-            },
-            {
-              categorie: "S'ENTRAÎNER",
-              items: [
-                { title: 'Exercices personnalisables', desc: 'QCM, sujets longs ou varié — format officiel, calibré à ton niveau exact.' },
-                { title: 'Correction intelligente', desc: 'Commentaire personnalisé sur chaque réponse ouverte, pas juste juste/faux.' },
-                { title: 'Contrôle blanc', desc: 'Un sujet complet, format calibré, avec correction détaillée.' },
-                { title: 'Simulateur jour J', desc: 'Minuterie stricte, conditions réelles d\'examen, pour désensibiliser au stress.' },
-                { title: 'Flashcards', desc: 'Mémorisation rapide façon Quizlet, avec suivi de maîtrise par carte.' },
-                { title: 'Mode Feynman', badge: '🎙️ Nouveau', desc: 'Explique une notion à voix haute ou à l\'écrit — l\'IA juge la vraie compréhension.' },
-              ]
-            },
-            {
-              categorie: 'SE SUIVRE',
-              items: [
-                { title: 'Analyse de copie', desc: 'Photographie ta copie corrigée par le prof pour des pistes personnalisées.' },
-                { title: 'Mémoire des erreurs', desc: 'Tes erreurs passées refont surface au bon moment pour les corriger.' },
-                { title: 'Suivi de progression', desc: 'Tes forces et lacunes, chapitre par chapitre, basé sur tes vrais résultats.' },
-                { title: 'Planning généré par IA', desc: 'Priorise tes chapitres faibles et tes contrôles à venir, sans que tu y penses.' },
-                { title: 'Debrief hebdomadaire', desc: 'Un vrai résumé de coach chaque semaine, pas juste des chiffres.' },
-              ]
-            },
-            {
-              categorie: 'RESTER MOTIVÉ',
-              items: [
-                { title: 'Séries et badges', desc: 'Un suivi de régularité qui donne envie de revenir chaque jour.' },
-                { title: 'Annales officielles', desc: 'De vrais sujets du bac classés par thème, en complément de l\'IA.' },
-              ]
-            },
-          ].map((section, sectionIdx) => (
-            <div key={section.categorie} style={{ marginBottom: sectionIdx < 3 ? 44 : 0 }}>
-              <AnimatedSection delay={sectionIdx * 0.05}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                  <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em' }}>
-                    {section.categorie}
-                  </p>
-                  <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 11 }}>· {section.items.length} outil{section.items.length > 1 ? 's' : ''}</span>
-                </div>
-              </AnimatedSection>
-              <div style={{
-                display: 'grid', gridTemplateColumns: isMobile ? '1fr' : `repeat(${Math.min(section.items.length, 4)}, 1fr)`,
-                gap: 1, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, overflow: 'hidden'
-              }}>
-                {section.items.map((f: any, idx) => (
-                  <AnimatedSection key={f.title} delay={idx * 0.03}>
-                    <div className="card-hover" style={{ background: '#070b18', padding: 20, height: '100%' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
-                        <h3 style={{ color: 'white', fontWeight: 700, fontSize: 13 }}>{f.title}</h3>
-                        {f.badge && (
-                          <span style={{ fontSize: 9, fontWeight: 700, color: '#7dd3fc', background: 'rgba(56,189,248,0.12)', padding: '2px 7px', borderRadius: 100 }}>
-                            {f.badge}
-                          </span>
-                        )}
-                      </div>
-                      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, lineHeight: 1.6 }}>{f.desc}</p>
-                    </div>
-                  </AnimatedSection>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="divider" />
-
       {/* Fondateur */}
       <div style={{ position: 'relative', zIndex: 2, padding: isMobile ? '60px 20px' : '100px 40px 100px' }}>
         <div style={{ maxWidth: 700, margin: '0 auto' }}>
@@ -912,7 +914,7 @@ export default function Home() {
             <div className="card" style={{ borderRadius: 16, padding: isMobile ? 24 : 40 }}>
               <p className="eyebrow" style={{ marginBottom: 16 }}>LE FONDATEUR</p>
               <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: 16 }}>
-                <img src="/louis.png" alt="Louis, fondateur de Novalys" style={{
+                <img src="/louis.png.png" alt="Louis, fondateur de Novalys" style={{
                   width: 52, height: 52, borderRadius: '50%', flexShrink: 0,
                   objectFit: 'cover', border: '1px solid rgba(255,255,255,0.15)'
                 }} />

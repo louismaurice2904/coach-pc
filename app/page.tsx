@@ -276,7 +276,9 @@ export default function Home() {
         borderBottom: scrollY > 50 || menuOuvert ? '1px solid rgba(255,255,255,0.06)' : '1px solid transparent',
         transition: 'all 0.3s ease'
       }}>
-        <img src="/logo.svg" alt="Novalys" style={{ height: 26 }} />
+        <Link href="/" style={{ textDecoration: 'none' }}>
+          <img src="/logo.svg" alt="Novalys" style={{ height: 26 }} />
+        </Link>
 
         {!isMobile && (
           <div style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
@@ -291,7 +293,7 @@ export default function Home() {
 
         {!isMobile ? (
           <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                        <Link href="/parents" style={{
+            <Link href="/parents" style={{
               color: '#7dd3fc', fontSize: 13, fontWeight: 600, textDecoration: 'none',
               padding: '8px 14px', borderRadius: 8, border: '1px solid rgba(56,189,248,0.3)',
               background: 'rgba(56,189,248,0.06)'
@@ -324,7 +326,7 @@ export default function Home() {
             }}>{item}</a>
           ))}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                        <Link href="/parents" onClick={() => setMenuOuvert(false)} style={{
+            <Link href="/parents" onClick={() => setMenuOuvert(false)} style={{
               color: '#7dd3fc', fontSize: 14, fontWeight: 600, textDecoration: 'none',
               padding: '10px 14px', borderRadius: 8, border: '1px solid rgba(56,189,248,0.3)',
               background: 'rgba(56,189,248,0.06)', textAlign: 'center'
@@ -376,7 +378,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Mock-up */}
           <div style={{ display: 'flex', justifyContent: 'center', animation: 'float 4.5s ease-in-out infinite' }}>
             <TiltCard>
               <div style={{ width: isMobile ? '100%' : 350, maxWidth: 350, borderRadius: 16, overflow: 'hidden', background: '#0c1120', border: '1px solid rgba(255,255,255,0.09)', boxShadow: '0 30px 70px rgba(0,0,0,0.5)' }}>
@@ -567,7 +568,7 @@ export default function Home() {
             {[
               { num: '01', titre: 'Importe ton cours.', desc: 'Colle ton cours, prends une photo, ou upload un PDF. Novalys lit et comprend le contenu instantanément.' },
               { num: '02', titre: 'Reçois ta fiche.', desc: 'Une fiche de révision claire et structurée : points clés, formules, définitions, méthode.' },
-              { num: '03', titre: "entraîne-toi avec des exercices personnalisés.", desc: 'Des exercices au format officiel du bac, calibrés à ton niveau exact, avec correction immédiate.' },
+              { num: '03', titre: "T'entraîne avec des exercices.", desc: 'Des exercices au format officiel du bac, calibrés à ton niveau exact, avec correction immédiate.' },
               { num: '04', titre: 'Suis ta progression.', desc: 'Visualise tes points forts et lacunes, chapitre par chapitre, et sache où concentrer tes efforts.' },
             ].map((step, i) => (
               <AnimatedSection key={step.num} delay={i * 0.08}>
@@ -735,7 +736,7 @@ export default function Home() {
                 </div>
                 {!isMobile && (
                   <div style={{ flex: 1, background: 'rgba(255,255,255,0.04)', borderRadius: 6, padding: '5px 12px', fontSize: 12, color: 'rgba(255,255,255,0.35)', fontFamily: 'monospace' }}>
-                    novalys.fr/{tabs.find(t => t.id === activeTab)?.url}
+                    novalys-app.fr/{tabs.find(t => t.id === activeTab)?.url}
                   </div>
                 )}
               </div>
@@ -815,16 +816,17 @@ export default function Home() {
       </div>
 
       <div className="divider" />
+
       {/* Fonctionnalités */}
       <div id="fonctionnalités" style={{ position: 'relative', zIndex: 2, padding: isMobile ? '60px 20px' : '100px 40px 100px' }}>
         <div style={{ maxWidth: 1000, margin: '0 auto' }}>
           <AnimatedSection>
             <p className="eyebrow" style={{ textAlign: 'center', marginBottom: 16 }}>LES OUTILS</p>
             <h2 style={{ fontSize: isMobile ? 26 : 38, fontWeight: 800, color: 'white', textAlign: 'center', marginBottom: 12, letterSpacing: '-1px' }}>
-              Tout ce dont tu as besoin.
+              <CountUp end={17} suffix=" outils." /> Un seul objectif.
             </h2>
             <p style={{ color: 'rgba(255,255,255,0.45)', textAlign: 'center', fontSize: isMobile ? 14 : 16, marginBottom: 56 }}>
-              Un seul outil. Toute ta physique-chimie, de la compréhension à la maîtrise.
+              Toute ta physique-chimie, de la compréhension à la maîtrise, dans un seul endroit.
             </p>
           </AnimatedSection>
 
@@ -841,17 +843,18 @@ export default function Home() {
             {
               categorie: "S'ENTRAÎNER",
               items: [
-                { title: 'Exercices adaptatifs', desc: 'Format officiel du bac, calibrés à ton niveau — QCM, sujets longs, ou varié.' },
+                { title: 'Exercices personnalisables', desc: 'QCM, sujets longs ou varié — format officiel, calibré à ton niveau exact.' },
                 { title: 'Correction intelligente', desc: 'Commentaire personnalisé sur chaque réponse ouverte, pas juste juste/faux.' },
                 { title: 'Contrôle blanc', desc: 'Un sujet complet, format calibré, avec correction détaillée.' },
                 { title: 'Simulateur jour J', desc: 'Minuterie stricte, conditions réelles d\'examen, pour désensibiliser au stress.' },
                 { title: 'Flashcards', desc: 'Mémorisation rapide façon Quizlet, avec suivi de maîtrise par carte.' },
-                { title: 'Mode Feynman', desc: 'Explique une notion avec tes mots — l\'IA juge la vraie compréhension.' },
+                { title: 'Mode Feynman', badge: '🎙️ Nouveau', desc: 'Explique une notion à voix haute ou à l\'écrit — l\'IA juge la vraie compréhension.' },
               ]
             },
             {
               categorie: 'SE SUIVRE',
               items: [
+                { title: 'Analyse de copie', desc: 'Photographie ta copie corrigée par le prof pour des pistes personnalisées.' },
                 { title: 'Mémoire des erreurs', desc: 'Tes erreurs passées refont surface au bon moment pour les corriger.' },
                 { title: 'Suivi de progression', desc: 'Tes forces et lacunes, chapitre par chapitre, basé sur tes vrais résultats.' },
                 { title: 'Planning généré par IA', desc: 'Priorise tes chapitres faibles et tes contrôles à venir, sans que tu y penses.' },
@@ -866,20 +869,30 @@ export default function Home() {
               ]
             },
           ].map((section, sectionIdx) => (
-            <div key={section.categorie} style={{ marginBottom: sectionIdx < 3 ? 40 : 0 }}>
+            <div key={section.categorie} style={{ marginBottom: sectionIdx < 3 ? 44 : 0 }}>
               <AnimatedSection delay={sectionIdx * 0.05}>
-                <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', marginBottom: 14 }}>
-                  {section.categorie}
-                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                  <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em' }}>
+                    {section.categorie}
+                  </p>
+                  <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 11 }}>· {section.items.length} outil{section.items.length > 1 ? 's' : ''}</span>
+                </div>
               </AnimatedSection>
               <div style={{
                 display: 'grid', gridTemplateColumns: isMobile ? '1fr' : `repeat(${Math.min(section.items.length, 4)}, 1fr)`,
                 gap: 1, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, overflow: 'hidden'
               }}>
-                {section.items.map((f, idx) => (
+                {section.items.map((f: any, idx) => (
                   <AnimatedSection key={f.title} delay={idx * 0.03}>
                     <div className="card-hover" style={{ background: '#070b18', padding: 20, height: '100%' }}>
-                      <h3 style={{ color: 'white', fontWeight: 700, fontSize: 13, marginBottom: 8 }}>{f.title}</h3>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+                        <h3 style={{ color: 'white', fontWeight: 700, fontSize: 13 }}>{f.title}</h3>
+                        {f.badge && (
+                          <span style={{ fontSize: 9, fontWeight: 700, color: '#7dd3fc', background: 'rgba(56,189,248,0.12)', padding: '2px 7px', borderRadius: 100 }}>
+                            {f.badge}
+                          </span>
+                        )}
+                      </div>
                       <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, lineHeight: 1.6 }}>{f.desc}</p>
                     </div>
                   </AnimatedSection>
@@ -891,16 +904,15 @@ export default function Home() {
       </div>
 
       <div className="divider" />
-      
 
-    {/* Fondateur */}
+      {/* Fondateur */}
       <div style={{ position: 'relative', zIndex: 2, padding: isMobile ? '60px 20px' : '100px 40px 100px' }}>
         <div style={{ maxWidth: 700, margin: '0 auto' }}>
           <AnimatedSection>
             <div className="card" style={{ borderRadius: 16, padding: isMobile ? 24 : 40 }}>
               <p className="eyebrow" style={{ marginBottom: 16 }}>LE FONDATEUR</p>
-              <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', marginBottom: 20, flexWrap: 'wrap' }}>
-                              <img src="/louis.png.png" alt="Louis, fondateur de Novalys" style={{
+              <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: 16 }}>
+                <img src="/louis.png" alt="Louis, fondateur de Novalys" style={{
                   width: 52, height: 52, borderRadius: '50%', flexShrink: 0,
                   objectFit: 'cover', border: '1px solid rgba(255,255,255,0.15)'
                 }} />
@@ -909,12 +921,9 @@ export default function Home() {
                   <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12 }}>Élève en classe préparatoire</p>
                 </div>
               </div>
-                            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: isMobile ? 14 : 15, lineHeight: 1.8, fontStyle: 'italic' }}>
+              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: isMobile ? 14 : 15, lineHeight: 1.8, fontStyle: 'italic' }}>
                 « J'utilisais déjà l'IA pour réviser mon bac, mais c'était long et fastidieux — devoir tout redemander à chaque fois, sans qu'elle se souvienne de rien d'une session à l'autre. Novalys, c'est l'outil que j'aurais aimé avoir : un système qui centralise tout, qui garde une vraie mémoire de ta progression. Je suis passé de 13 à 16 en physique-chimie entre le début et la fin de ma Terminale, avec mention très bien au bac — je sais ce qui manque à un élève qui se sent perdu, et c'est exactement ce que Novalys essaie de combler. »
               </p>
-              <div style={{ marginTop: 18, display: 'inline-flex', alignItems: 'center', gap: 8, border: '1px dashed rgba(255,255,255,0.2)', borderRadius: 100, padding: '6px 14px' }}>
-                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontWeight: 600 }}>Vidéo à venir</span>
-              </div>
             </div>
           </AnimatedSection>
         </div>
@@ -987,7 +996,7 @@ export default function Home() {
                   <p style={{ color: 'white', fontWeight: 800, fontSize: 38 }}>9,99€</p>
                   <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>/mois</p>
                 </div>
-                <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13, marginBottom: 24 }}>Résiliable à tout moment</p>
+                <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13, marginBottom: 24 }}>Résiliable à tout moment · 7 jours d'essai gratuit</p>
                 {['Tout le gratuit, plus :', 'Exercices adaptatifs illimités', 'Import photo & PDF (OCR)', 'Correction IA des réponses', 'Contrôle blanc & révision DS', 'Analyse de copies corrigées', 'Mémoire des erreurs'].map((f, i) => (
                   <div key={f} style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 12 }}>
                     <span style={{ color: i === 0 ? 'transparent' : '#38bdf8', fontSize: 13 }}>{i === 0 ? '' : '—'}</span>
@@ -1034,7 +1043,7 @@ export default function Home() {
         </AnimatedSection>
       </div>
 
-            {/* Footer */}
+      {/* Footer */}
       <div style={{ position: 'relative', zIndex: 2, padding: isMobile ? '28px 20px' : '36px 40px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
         <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12 }}>© 2026 Novalys</p>
         <div style={{ display: 'flex', gap: isMobile ? 14 : 24, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -1042,7 +1051,7 @@ export default function Home() {
           <Link href="/contact" style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12, textDecoration: 'none' }}>Contact</Link>
           <Link href="/mentions-legales" style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12, textDecoration: 'none' }}>Mentions légales</Link>
           <Link href="/cgv" style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12, textDecoration: 'none' }}>CGV</Link>
-                    <Link href="/inscription" style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12, textDecoration: 'none' }}>S'inscrire</Link>
+          <Link href="/inscription" style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12, textDecoration: 'none' }}>S'inscrire</Link>
         </div>
       </div>
     </div>
@@ -1053,8 +1062,8 @@ function FAQSection({ isMobile }: { isMobile: boolean }) {
   const [open, setOpen] = useState<number | null>(null)
   const faqs = [
     { q: "Novalys fonctionne pour quels niveaux ?", r: "Novalys est disponible pour la Seconde, la Première et la Terminale, avec des fiches et exercices adaptés au programme exact de chaque classe." },
-    { q: "Comment fonctionne la génération de fiches ?", r: "Tu importes ton cours (texte, photo ou PDF), l'IA analyse le contenu et génère automatiquement une fiche structurée." },
-    { q: "Les exercices sont-ils vraiment adaptés à mon niveau ?", r: "Oui — les exercices sont générés en tenant compte du programme officiel de ta classe et du niveau de difficulté que tu choisis." },
+    { q: "Comment fonctionne la génération de fiches ?", r: "Tu importes ton cours (texte, photo ou PDF), l'IA analyse le contenu et génère automatiquement une fiche structurée, personnalisable selon tes préférences." },
+    { q: "Les exercices sont-ils vraiment adaptés à mon niveau ?", r: "Oui — les exercices sont générés en tenant compte du programme officiel de ta classe et du niveau de difficulté que tu choisis, sans jamais dépasser ce qui est attendu à ton niveau." },
     { q: "Mes données sont-elles sécurisées ?", r: "Oui. Tes cours et résultats sont stockés de façon sécurisée et chiffrée. Seul toi y as accès." },
     { q: "Comment fonctionne la révision avant un contrôle ?", r: "Indique la date de ton contrôle et le chapitre concerné, Novalys génère un plan de révision jour par jour." },
     { q: "Est-ce que je peux annuler à tout moment ?", r: "Oui, sans engagement, directement depuis ton profil." },

@@ -4,6 +4,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import { useState, useRef, useEffect } from 'react'
 
+const ADMIN_EMAIL = 'louismaurice2904@gmail.com'
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -35,6 +36,15 @@ export default function Nav() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [toolsOpen, setToolsOpen] = useState(false)
   const toolsRef = useRef<HTMLDivElement>(null)
+    const [isAdmin, setIsAdmin] = useState(false)
+
+  useEffect(() => {
+    const check = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user?.email === ADMIN_EMAIL) setIsAdmin(true)
+    }
+    check()
+  }, [])
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -135,7 +145,16 @@ export default function Nav() {
           </div>
         </div>
 
-        <div className="nav-right" style={{ gap: 4, alignItems: 'center', marginLeft: 'auto' }}>
+              <div className="nav-right" style={{ gap: 4, alignItems: 'center', marginLeft: 'auto' }}>
+          {isAdmin && (
+            <Link href="/admin" className="nav-link" style={{
+              fontSize: 13, color: pathname === '/admin' ? 'white' : '#7dd3fc', textDecoration: 'none',
+              padding: '6px 10px', borderRadius: 8, transition: 'all 0.2s',
+              background: pathname === '/admin' ? 'rgba(56,189,248,0.15)' : 'transparent'
+            }}>
+              ⚙️ Admin
+            </Link>
+          )}
           <Link href="/profil" className="nav-link" style={{
             fontSize: 13, color: 'rgba(255,255,255,0.5)', textDecoration: 'none',
             padding: '6px 10px', borderRadius: 8, transition: 'all 0.2s'
@@ -203,8 +222,10 @@ export default function Nav() {
               {link.label}
             </Link>
           ))}
-
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 12, marginTop: 12 }}>
+            {isAdmin && (
+              <Link href="/admin" onClick={() => setMobileOpen(false)} style={{ display: 'block', padding: '12px 16px', color: '#7dd3fc', textDecoration: 'none', fontSize: 14, fontWeight: 600 }}>⚙️ Admin</Link>
+            )}
             <Link href="/profil" onClick={() => setMobileOpen(false)} style={{ display: 'block', padding: '12px 16px', color: 'rgba(255,255,255,0.5)', textDecoration: 'none', fontSize: 14 }}>Mon profil</Link>
             <Link href="/changelog" onClick={() => setMobileOpen(false)} style={{ display: 'block', padding: '12px 16px', color: 'rgba(255,255,255,0.5)', textDecoration: 'none', fontSize: 14 }}>Nouveautés</Link>
             <button onClick={handleDeconnexion} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '12px 16px', color: 'rgba(239,68,68,0.8)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, fontFamily: 'inherit' }}>Déconnexion</button>

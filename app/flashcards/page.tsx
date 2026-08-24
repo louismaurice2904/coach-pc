@@ -87,15 +87,16 @@ export default function Flashcards() {
           niveau_maitrise: 0,
           derniere_revision: new Date().toISOString().split('T')[0]
         }))
-                const { data: inserted, error: insertError } = await supabase.from('flashcards').insert(nouvellesCards).select()
+                    const { data: inserted, error: insertError } = await supabase.from('flashcards').insert(nouvellesCards).select()
         if (insertError) {
-          toast('Erreur insertion : ' + insertError.message, 'error')
           console.error('Erreur insertion flashcards:', insertError)
+          toast('Erreur lors de la génération des flashcards', 'error')
         } else if (inserted) {
           setCards(inserted)
           setCardsExistantes(prev => ({ ...prev, [c.chapitre]: true }))
           toast(`${nouvellesCards.length} flashcards générées ✅`, 'success')
         }
+         
       }
     } catch {
       toast('Erreur de connexion', 'error')

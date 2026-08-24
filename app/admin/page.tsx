@@ -16,10 +16,12 @@ export default function Admin() {
   const [faqs, setFaqs] = useState<any[]>([])
   const [conseils, setConseils] = useState<any[]>([])
   const [usage, setUsage] = useState<any[]>([])
+  const [stats, setStats] = useState<any>(null)
+  const [loadingStats, setLoadingStats] = useState(false)
   const [newQ, setNewQ] = useState('')
   const [newR, setNewR] = useState('')
   const [newConseil, setNewConseil] = useState('')
-  const [onglet, setOnglet] = useState<'messages' | 'faq' | 'conseils' | 'usage'>('messages')
+  const [onglet, setOnglet] = useState<'apercu' | 'messages' | 'faq' | 'conseils' | 'usage'>('apercu')
   const [loading, setLoading] = useState(true)
   const [loadingUsage, setLoadingUsage] = useState(false)
 
@@ -38,9 +40,25 @@ export default function Admin() {
       if (f) setFaqs(f)
       if (c) setConseils(c)
       setLoading(false)
+      chargerStats()
     }
     init()
   }, [])
+
+  const chargerStats = async () => {
+    setLoadingStats(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/api/admin-stats', {
+        headers: { 'Authorization': `Bearer ${session?.access_token}` }
+      })
+      const data = await res.json()
+      if (!data.error) setStats(data)
+    } catch (e) {
+      console.error('Erreur chargement stats:', e)
+    }
+    setLoadingStats(false)
+  }
 
   const chargerUsage = async () => {
     setLoadingUsage(true)
@@ -134,14 +152,14 @@ export default function Admin() {
       <div className="noise" />
       <div style={{ position: 'fixed', top: -200, right: -200, width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.15), transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
 
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '40px 24px', position: 'relative', zIndex: 1 }}>
+      <div style={{ maxWidth: 1000, margin: '0 auto', padding: '40px 24px', position: 'relative', zIndex: 1 }}>
         <div style={{ marginBottom: 32 }}>
-          <h1 style={{ fontSize: 28, fontWeight: 900, color: 'white', letterSpacing: '-0.5px', marginBottom: 6 }}>⚙️ Panel Admin</h1>
-          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>Gère les messages, la FAQ, les conseils et l'usage IA de Novalys.</p>
+          <h1 style={{ fontSize: 28, fontWeight: 900, color: 'white', letterSpacing: '-0.5px', marginBottom: 6 }}>⚙️ Novalys Admin</h1>
+          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>Pilote ton produit, ton contenu et tes utilisateurs.</p>
         </div>
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
-          {(['messages', 'faq', 'conseils', 'usage'] as const).map(tab => (
+          {(['apercu', 'messages', 'faq', 'conseils', 'usage'] as const).map(tab => (
             <button key={tab} onClick={() => setOnglet(tab)} style={{
               padding: '10px 20px', borderRadius: 10, border: 'none', cursor: 'pointer',
               fontWeight: 700, fontSize: 13,
@@ -149,10 +167,111 @@ export default function Admin() {
               color: onglet === tab ? 'white' : 'rgba(255,255,255,0.4)',
               boxShadow: onglet === tab ? '0 0 20px rgba(99,102,241,0.4)' : 'none'
             }}>
-              {tab === 'messages' ? `💬 Messages (${messages.filter(m => !m.lu).length})` : tab === 'faq' ? '❓ FAQ' : tab === 'conseils' ? '💡 Conseils du jour' : '📊 Usage IA'}
+              {tab === 'apercu' ? '📊 Vue d\'ensemble' : tab === 'messages' ? `💬 Messages (${messages.filter(m => !m.lu).length})` : tab === 'faq' ? '❓ FAQ' : tab === 'conseils' ? '💡 Conseils du jour' : '🔍 Usage IA'}
             </button>
           ))}
         </div>
+
+        {onglet === 'apercu' && (
+          <div>
+            {loadingStats || !stats ? (
+              <div className="glass" style={{ borderRadius: 20, padding: 40, textAlign: 'center' }}>
+                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>Chargement des statistiques...</p>
+              </div>
+            ) : (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 20 }}>
+                  {[
+                    { label: 'Inscrits', valeur: stats.totalInscrits, couleur: '#38bdf8' },
+                    { label: 'Abonnés payants', valeur: stats.abonnesPaye, couleur: '#86efac' },
+                    { label: 'Essais actifs', valeur: stats.essaisActifs, couleur: '#fcd34d' },
+                    { label: 'Revenu mensuel est.', valeur: `${stats.revenuMensuelEstime.toFixed(2)}€`, couleur: '#c4b5fd' },
+                  ].map(s => (
+                    <div key={s.label} className="glass" style={{ borderRadius: 16, padding: 18 }}>
+                      <p style={{ color: s.couleur, fontWeight: 900, fontSize: 26, marginBottom: 4 }}>{s.valeur}</p>
+                      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: 600 }}>{s.label}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                  <div className="glass" style={{ borderRadius: 16, padding: 20 }}>
+                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', marginBottom: 14 }}>ACTIVITÉ IA</p>
+                    <div style={{ display: 'flex', gap: 20, marginBottom: 16 }}>
+                      <div>
+                        <p style={{ color: 'white', fontWeight: 800, fontSize: 20 }}>{stats.appelsIA7j}</p>
+                        <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11 }}>appels / 7 jours</p>
+                      </div>
+                      <div>
+                        <p style={{ color: 'white', fontWeight: 800, fontSize: 20 }}>{stats.appelsIA30j}</p>
+                        <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11 }}>appels / 30 jours</p>
+                      </div>
+                    </div>
+                    <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, fontWeight: 700, marginBottom: 8 }}>TOP FONCTIONNALITÉS</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {stats.topRoutes.map((r: any) => (
+                        <div key={r.route} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                          <span style={{ color: 'rgba(255,255,255,0.6)' }}>{r.route}</span>
+                          <span style={{ color: '#38bdf8', fontWeight: 700 }}>{r.count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="glass" style={{ borderRadius: 16, padding: 20 }}>
+                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', marginBottom: 14 }}>RÉPARTITION PAR NIVEAU</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {Object.entries(stats.repartitionNiveau).map(([niveau, count]: any) => (
+                        <div key={niveau}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                            <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>{niveau}</span>
+                            <span style={{ color: 'white', fontSize: 12, fontWeight: 700 }}>{count}</span>
+                          </div>
+                          <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 99, height: 6 }}>
+                            <div style={{ width: `${(count / Math.max(stats.totalInscrits, 1)) * 100}%`, height: 6, borderRadius: 99, background: '#38bdf8' }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>Cours importés au total</span>
+                      <span style={{ color: 'white', fontWeight: 700, fontSize: 12 }}>{stats.totalCours}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {(stats.comptesSuspendus > 0 || stats.messagesNonLus > 0) && (
+                  <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                    {stats.messagesNonLus > 0 && (
+                      <button onClick={() => setOnglet('messages')} style={{
+                        background: 'rgba(56,189,248,0.1)', border: '1px solid rgba(56,189,248,0.3)', borderRadius: 12,
+                        padding: '12px 18px', cursor: 'pointer', color: '#7dd3fc', fontSize: 13, fontWeight: 600
+                      }}>
+                        📬 {stats.messagesNonLus} message{stats.messagesNonLus > 1 ? 's' : ''} non lu{stats.messagesNonLus > 1 ? 's' : ''}
+                      </button>
+                    )}
+                    {stats.comptesSuspendus > 0 && (
+                      <button onClick={() => setOnglet('usage')} style={{
+                        background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 12,
+                        padding: '12px 18px', cursor: 'pointer', color: '#fca5a5', fontSize: 13, fontWeight: 600
+                      }}>
+                        🚫 {stats.comptesSuspendus} compte{stats.comptesSuspendus > 1 ? 's' : ''} suspendu{stats.comptesSuspendus > 1 ? 's' : ''}
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                <button onClick={chargerStats} style={{
+                  marginTop: 20, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+                  color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: 600, padding: '8px 14px',
+                  borderRadius: 8, cursor: 'pointer'
+                }}>
+                  🔄 Actualiser les statistiques
+                </button>
+              </>
+            )}
+          </div>
+        )}
 
         {onglet === 'messages' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

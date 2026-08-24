@@ -9,7 +9,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
-
+const ADMIN_EMAIL = 'louismaurice2904@gmail.com'
 const BADGE_LIST = [
   { id: 'premier_cours', icon: '💥', label: 'Big Bang' },
   { id: 'streak_3', icon: '⚛️', label: 'Réaction en chaîne' },
@@ -113,8 +113,13 @@ export default function Dashboard() {
 
   useEffect(() => {
     const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+            const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/connexion'; return }
+
+      if (user.email === ADMIN_EMAIL) {
+        window.location.href = '/admin'
+        return
+      }
 
              const { data: p } = await supabase.from('profils').select('*').eq('user_id', user.id).single()
 
